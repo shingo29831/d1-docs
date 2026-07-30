@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>子供見守りシステム（仮） - AWS安価構成 + Webex連携版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <h1>子供見守りシステム（仮）</h1>
+        <p>Cisco Meraki × Webex × AWS安価構成 × 3Dハザードマップ</p>
+    </header>
+
+    <div class="container">
+        
+        <h2 class="section-title">システムアーキテクチャ (Webex & Cost-Optimized)</h2>
+        <div class="architecture-box">
+            <div class="mermaid">
+                graph TD
+                    subgraph Edge ["Cisco Meraki Edge"]
+                        C[MV Camera]
+                        T[MT10: Temp/Humidity]
+                        D[MT20: Door Sensor]
+                    end
+                    
+                    subgraph AWS ["AWS Cloud (Cost Optimized)"]
+                        IoT[AWS IoT Core]
+                        EC2[Amazon EC2<br>Spot Instance]
+                        DB[(Amazon DynamoDB<br>Provisioned: 1WCU)]
+                        S3[Amazon S3 + CloudFront]
+                    end
+                    
+                    subgraph UI_Layer ["Frontend & Notification"]
+                        UI[Dedicated Site<br>React + Three.js]
+                        PC[Polycam 3D Model]
+                        Webex[Cisco Webex<br>Bot / Space]
+                    end
+
+                    C -- Area Occupancy / Audio --> IoT
+                    T -- Temp Alert --> IoT
+                    D -- Door Open --> IoT
+                    
+                    IoT -- MQTT Trigger --> EC2
+                    EC2 -- Fetch RTSP Stream --> C
+                    
+                    EC2 -- 1. AI Inference --> DB
+                    EC2 -- 2. Send Alert + Image --> Webex
+                    
+                    S3 -- Host Static Assets --> UI
+                    DB -- Fetch Hazard Data --> UI
+                    PC -- .gltf Model --> UI
+                    
+                    IoT -. MQTT over WebSocket<br>(Real-time Alert) .-> UI
+                    
+                    classDef meraki fill:#74b82d,stroke:#fff,stroke-width:2px,color:#fff;
+                    classDef aws fill:#FF9900,stroke:#fff,stroke-width:2px,color:#232F3E;
+                    classDef ui fill:#ff4a4a,stroke:#fff,stroke-width:2px,color:#fff;
+                    classDef cisco fill:#00bceb,stroke:#fff,stroke-width:2px,color:#fff;
+                    
+                    class C,T,D meraki;
+                    class IoT,EC2,DB,S3 aws;
+                    class UI ui;
+                    class Webex cisco;
+            </div>
+            <p class="architecture-desc">
+                <strong>【通知機能とコスト最適化のポイント】</strong><br>
+                1. <strong>Cisco Webex連携</strong>: EC2上のAIが危険を検知した際、YOLOで枠を描画した証拠画像をWebex API経由でチャットルームに即時送信（API利用無料）。<br>
+                2. <strong>専用サイトへのリアルタイム通知</strong>: AWS IoT Coreの「MQTT over WebSocket」をフロントエンドから直接購読。追加サーバーなしでブラウザへの即時ポップアップを実現。<br>
+                3. <strong>Amazon DynamoDB</strong>: プロビジョニングモードで上限を最小（1WCU/1RCU）に固定し自動拡張をOFF。万が一バグで暴走しても月額約100円で課金が物理的にストップ（青天井リスクゼロ）。
+            </p>
+        </div>
+
+        <h2 class="section-title">主要機能要件</h2>
+        <div class="features-grid">
+            
+            <div class="feature-card alert">
+                <i class="fa-solid fa-triangle-exclamation feature-icon"></i>
+                <div class="feature-title">危険因子通知機能</div>
+                <div class="tech-tags">
+                    <span class="tech-tag">YOLOv8</span>
+                    <span class="tech-tag cisco">Webex API</span>
+                    <span class="tech-tag aws">EC2 Spot</span>
+                </div>
+                <div class="feature-desc">
+                    子供が危険エリアに接近した際、即座に画像付きで通知します。
+                    <ul>
+                        <li><strong>誤飲防止:</strong> EC2上でYOLOを稼働させ、小さな物体を検出。結果画像をWebexに送信。</li>
+                        <li><strong>カーテン紐:</strong> MVのArea Occupancyで紐付近への侵入を検知。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="feature-card alert">
+                <i class="fa-solid fa-person-falling feature-icon"></i>
+                <div class="feature-title">子供の事故通知機能</div>
+                <div class="tech-tags">
+                    <span class="tech-tag">MediaPipe</span>
+                    <span class="tech-tag cisco">Webex API</span>
+                    <span class="tech-tag aws">IoT Core</span>
+                </div>
+                <div class="feature-desc">
+                    転倒音や急激な温度変化をトリガーに、骨格推定を起動して事故状態を判定します。
+                    <ul>
+                        <li><strong>転倒検知:</strong> 頭部と足首のY座標から判定し、専用サイトへWebSocketで緊急アラート。</li>
+                        <li><strong>うつ伏せ寝:</strong> 顔のキーポイント消失から判定。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-door-open feature-icon"></i>
+                <div class="feature-title">子供移動検知機能</div>
+                <div class="tech-tags">
+                    <span class="tech-tag">MT20</span>
+                    <span class="tech-tag">MV Lux Sensor</span>
+                </div>
+                <div class="feature-desc">
+                    夜間の危険な徘徊や移動を検知します。
+                    <ul>
+                        <li>MT20のドア開閉イベントを受信。</li>
+                        <li>MVカメラの照度データを参照し、消灯状態でのドア開閉のみをアラートとしてWebexへ通知。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-map-location-dot feature-icon"></i>
+                <div class="feature-title">ハザードマップ生成機能</div>
+                <div class="tech-tags">
+                    <span class="tech-tag">Polycam</span>
+                    <span class="tech-tag">Three.js</span>
+                    <span class="tech-tag aws">S3 Hosting</span>
+                </div>
+                <div class="feature-desc">
+                    専用サイト上に直感的な3Dハザードマップを生成します。
+                    <ul>
+                        <li><strong>LiDAR不要:</strong> 手持ちのスマホとPolycamで部屋を撮影し、3Dモデルを生成。</li>
+                        <li>S3から配信された3D空間上に、DynamoDBのデータをヒートマップとして重畳表示。</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-chart-line feature-icon"></i>
+                <div class="feature-title">行動パターン解析機能</div>
+                <div class="tech-tags">
+                    <span class="tech-tag">Scikit-learn</span>
+                    <span class="tech-tag">Isolation Forest</span>
+                </div>
+                <div class="feature-desc">
+                    統計情報から危険に繋がる予兆を分析します。
+                    <ul>
+                        <li>蓄積した滞在座標と時間帯をクラスタリング。</li>
+                        <li>普段行かない場所へのアクセスを潜在的リスクとして抽出し、専用サイトのダッシュボードにサジェスト。</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+
+        <h2 class="section-title">技術スタック</h2>
+        <div class="tech-stack-container">
+            <div class="tech-category">
+                <h3>Hardware / Edge</h3>
+                <ul class="tech-list">
+                    <li>Cisco Meraki MV Camera</li>
+                    <li>Cisco Meraki MT10 (温湿度)</li>
+                    <li>Cisco Meraki MT20 (ドア開閉)</li>
+                </ul>
+            </div>
+            <div class="tech-category">
+                <h3>Cloud / Notification</h3>
+                <ul class="tech-list">
+                    <li>AWS IoT Core (MQTT / WebSocket)</li>
+                    <li>Amazon EC2 (Spot) / DynamoDB / S3</li>
+                    <li>Cisco Webex Messaging API</li>
+                </ul>
+            </div>
+            <div class="tech-category">
+                <h3>AI / Frontend</h3>
+                <ul class="tech-list">
+                    <li>YOLOv8 / MediaPipe / OpenCV</li>
+                    <li>Scikit-learn / NumPy</li>
+                    <li>Polycam (3D Photogrammetry)</li>
+                    <li>React + Three.js (Dedicated Site)</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
