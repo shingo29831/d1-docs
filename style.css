@@ -285,3 +285,29 @@ header p {
     color: var(--text-muted);
     font-size: 0.95rem;
 }
+
+/* ヘッダーのアクションボタン用スタイル */
+.header-actions {
+    margin-top: 1.5rem;
+}
+
+.btn-primary {
+    display: inline-block;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 0.8rem 1.5rem;
+    border-radius: 30px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background-color 0.3s, transform 0.2s;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+}
+
+.btn-primary:hover {
+    background-color: #ff2a2a;
+    transform: translateY(-2px);
+}
+
+.btn-primary i {
+    margin-right: 0.5rem;
+}

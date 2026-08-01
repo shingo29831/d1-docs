@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ダッシュボード - 子供見守りシステム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- ヘッダー -->
+        <header class="app-header">
+            <div class="header-left">
+                <h1><i class="fa-solid fa-shield-cat"></i> Child Monitor Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="status-badge connected">
+                    <i class="fa-solid fa-wifi"></i> MQTT Connected
+                </div>
+                <div class="time-display" id="currentTime">--:--:--</div>
+            </div>
+        </header>
+
+        <!-- メインコンテンツ -->
+        <main class="main-content">
+            <!-- 左側: 3Dハザードマップ (Three.js) -->
+            <section class="map-section">
+                <div class="section-header">
+                    <h2><i class="fa-solid fa-cube"></i> 3D Hazard Map (Live)</h2>
+                    <div class="map-controls">
+                        <button class="btn-icon" title="Reset View"><i class="fa-solid fa-expand"></i></button>
+                    </div>
+                </div>
+                <div class="canvas-container" id="three-canvas-container">
+                    <!-- Three.jsのCanvasがここに挿入されます -->
+                    <div class="loading-overlay" id="map-loading">
+                        <i class="fa-solid fa-spinner fa-spin"></i> Loading 3D Model...
+                    </div>
+                </div>
+            </section>
+
+            <!-- 右側: ダッシュボードパネル -->
+            <aside class="dashboard-panel">
+                
+                <!-- センサーステータス -->
+                <div class="panel-card">
+                    <h3><i class="fa-solid fa-tower-broadcast"></i> Sensor Status</h3>
+                    <div class="sensor-grid">
+                        <div class="sensor-item">
+                            <i class="fa-solid fa-temperature-half"></i>
+                            <div class="sensor-info">
+                                <span class="sensor-label">Room Temp</span>
+                                <span class="sensor-value" id="temp-value">24.5°C</span>
+                            </div>
+                        </div>
+                        <div class="sensor-item">
+                            <i class="fa-solid fa-door-closed"></i>
+                            <div class="sensor-info">
+                                <span class="sensor-label">Door Status</span>
+                                <span class="sensor-value safe" id="door-value">Closed</span>
+                            </div>
+                        </div>
+                        <div class="sensor-item">
+                            <i class="fa-solid fa-video"></i>
+                            <div class="sensor-info">
+                                <span class="sensor-label">Camera AI</span>
+                                <span class="sensor-value active">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AIインサイト (行動パターン解析) -->
+                <div class="panel-card insight-card">
+                    <h3><i class="fa-solid fa-lightbulb"></i> AI Insights</h3>
+                    <p class="insight-text">
+                        <i class="fa-solid fa-circle-info"></i> 普段行かない「キッチンエリア」への接近が過去3日間で増加傾向にあります。注意してください。
+                    </p>
+                </div>
+
+                <!-- リアルタイムアラート -->
+                <div class="panel-card alerts-card">
+                    <h3><i class="fa-solid fa-bell"></i> Real-time Alerts</h3>
+                    <div class="alerts-list" id="alerts-list">
+                        <!-- アラートアイテムがJSで動的に追加されます -->
+                        <div class="alert-item empty-state">
+                            No recent alerts.
+                        </div>
+                    </div>
+                </div>
+
+            </aside>
+        </main>
+    </div>
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
