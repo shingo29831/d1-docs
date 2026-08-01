@@ -17,7 +17,18 @@
 
     <div class="container">
         
-        <h2 class="section-title">システムアーキテクチャ (Webex & Cost-Optimized)</h2>
+        <nav class="toc">
+            <h3><i class="fa-solid fa-list"></i> 目次</h3>
+            <ul>
+                <li><a href="#architecture">1. システムアーキテクチャ (Webex & Cost-Optimized)</a></li>
+                <li><a href="#features">2. 主要機能要件</a></li>
+                <li><a href="#tech-stack">3. 技術スタック</a></li>
+                <li><a href="#team-roles">4. チーム開発体制と役割分担 (計5名)</a></li>
+                <li><a href="#alternative-impl">5. 実機なしでの代替実装アプローチ</a></li>
+            </ul>
+        </nav>
+
+        <h2 id="architecture" class="section-title">1. システムアーキテクチャ (Webex & Cost-Optimized)</h2>
         <div class="architecture-box">
             <div class="mermaid">
                 graph TD
@@ -74,7 +85,7 @@
             </p>
         </div>
 
-        <h2 class="section-title">主要機能要件</h2>
+        <h2 id="features" class="section-title">2. 主要機能要件</h2>
         <div class="features-grid">
             
             <div class="feature-card alert">
@@ -162,7 +173,7 @@
 
         </div>
 
-        <h2 class="section-title">技術スタック</h2>
+        <h2 id="tech-stack" class="section-title">3. 技術スタック</h2>
         <div class="tech-stack-container">
             <div class="tech-category">
                 <h3>Hardware / Edge</h3>
@@ -188,6 +199,91 @@
                     <li>Polycam (3D Photogrammetry)</li>
                     <li>React + Three.js (Dedicated Site)</li>
                 </ul>
+            </div>
+        </div>
+
+        <h2 id="team-roles" class="section-title">4. チーム開発体制と役割分担 (計5名)</h2>
+        <p class="section-desc">学生の稼働率の偏りを吸収するため、依存関係を最小限に抑えた疎結合な3つのロールに分割し、各モジュールを独立してテスト可能にします。</p>
+        
+        <div class="roles-grid">
+            <div class="role-card">
+                <div class="role-header">
+                    <h3>Role A: エッジAI & センサー</h3>
+                    <span class="role-count">2名</span>
+                </div>
+                <div class="role-body">
+                    <p><strong>ミッション:</strong> データソースの構築とAI推論</p>
+                    <ul>
+                        <li>Webカメラ映像の取得とYOLOv8/MediaPipeのローカル稼働</li>
+                        <li>MT10/MT20のダミーデータ生成とMQTT送信シミュレータ作成</li>
+                        <li>危険検知時のデータおよび画像をRole Bへ連携</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="role-card">
+                <div class="role-header">
+                    <h3>Role B: バックエンド & Webex</h3>
+                    <span class="role-count">1〜2名</span>
+                </div>
+                <div class="role-body">
+                    <p><strong>ミッション:</strong> クラウドインフラ構築と外部API連携</p>
+                    <ul>
+                        <li>AWS IoT Coreの受け口作成とDynamoDBへのデータ保存</li>
+                        <li>Webex Messaging APIを利用したアラート・画像送信処理</li>
+                        <li>※初期はローカルNode.js/PythonサーバーとSQLiteで代替可</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="role-card">
+                <div class="role-header">
+                    <h3>Role C: フロントエンド & 3D</h3>
+                    <span class="role-count">1〜2名</span>
+                </div>
+                <div class="role-body">
+                    <p><strong>ミッション:</strong> 専用サイトのUI構築とリアルタイム描画</p>
+                    <ul>
+                        <li>React + Three.jsの環境構築</li>
+                        <li>Polycamで生成した.gltfモデルの読み込みと表示</li>
+                        <li>MQTT over WebSocketによるアラートの即時ポップアップ処理</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h2 id="alternative-impl" class="section-title">5. 実機なしでの代替実装アプローチ</h2>
+        <p class="section-desc">Cisco機器が手元にない初期フェーズでも、仕様を縮小せずに開発を進めるためのシミュレーション方針です。後日実機が手に入った際、接続先を変更するだけで移行可能な設計とします。</p>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-video feature-icon"></i>
+                <div class="feature-title">MV Cameraの代替</div>
+                <div class="feature-desc">
+                    <ul>
+                        <li>PCの内蔵Webカメラ、またはスマートフォンをWebカメラ化するアプリを使用。</li>
+                        <li>Pythonの <code>cv2.VideoCapture(0)</code> でフレームを取得し、YOLOv8/MediaPipeの入力に流し込む。</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-temperature-half feature-icon"></i>
+                <div class="feature-title">MT10 / MT20の代替</div>
+                <div class="feature-desc">
+                    <ul>
+                        <li>PythonスクリプトでダミーのJSONデータを生成し、定期的にMQTTブローカーへPublishする。</li>
+                        <li>初期は公開テストサーバー（<code>test.mosquitto.org</code>）を利用し、AWS IoT Core準備後に切り替え。</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="feature-card">
+                <i class="fa-solid fa-server feature-icon"></i>
+                <div class="feature-title">EC2 (Spot)の代替</div>
+                <div class="feature-desc">
+                    <ul>
+                        <li>開発中は、Role A担当者のローカルPCを「EC2インスタンス」と見立ててAI推論とバックエンド処理を稼働。</li>
+                        <li>コンテナ化（Docker）しておくとAWS移行がスムーズ。</li>
+                    </ul>
+                </div>
             </div>
         </div>
 
