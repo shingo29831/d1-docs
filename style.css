@@ -119,6 +119,13 @@ header p {
     gap: 1.5rem;
 }
 
+/* ステップ（手順）用レイアウト（縦1列で視線移動をスムーズに） */
+.steps-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
 .feature-card {
     background: var(--card-bg);
     border-radius: 12px;
