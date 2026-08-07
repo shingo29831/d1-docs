@@ -27,7 +27,9 @@
                 <li><a href="#features">2. 主要機能要件</a></li>
                 <li><a href="#tech-stack">3. 技術スタック</a></li>
                 <li><a href="#team-roles">4. チーム開発体制と役割分担 (計5名)</a></li>
-                <li><a href="#alternative-impl">5. 実機なしでの代替実装アプローチ</a></li>
+                <li><a href="#role-a-details">5. Role A: エッジAI＆センサー通信モジュール 実装詳細</a></li>
+                <li><a href="#role-b-details">6. Role B: バックエンド＆Webexモジュール 実装詳細</a></li>
+                <li><a href="#role-c-details">7. Role C: フロントエンド＆3Dモジュール 実装詳細</a></li>
             </ul>
         </nav>
 
@@ -218,7 +220,7 @@
                     <p><strong>ミッション:</strong> データソースの構築とAI推論</p>
                     <ul>
                         <li>Webカメラ映像の取得とYOLOv8/MediaPipeのローカル稼働</li>
-                        <li>MT10/MT20のダミーデータ生成とMQTT送信シミュレータ作成</li>
+                        <li>Cisco Meraki実機からのデータ取得（およびテスト用MQTT送信シミュレータ作成）</li>
                         <li>危険検知時のデータおよび画像をRole Bへ連携</li>
                     </ul>
                 </div>
@@ -255,36 +257,297 @@
             </div>
         </div>
 
-        <h2 id="alternative-impl" class="section-title">5. 実機なしでの代替実装アプローチ</h2>
-        <p class="section-desc">Cisco機器が手元にない初期フェーズでも、仕様を縮小せずに開発を進めるためのシミュレーション方針です。後日実機が手に入った際、接続先を変更するだけで移行可能な設計とします。</p>
+        <h2 id="role-a-details" class="section-title">5. Role A: エッジAI＆センサー通信モジュール 実装詳細</h2>
+        <p class="section-desc">
+            Role Aが担当する「エッジAI＆センサー通信モジュール」は、システムの「目と脳」を担う最も負荷の高いコンポーネントです。単にライブラリを繋ぎ合わせるだけでは、<strong>「VPNのネットワーク瞬断によるプロセス停止」や「AI推論・API通信のI/O待ちによるカメラ映像の遅延（バッファ詰まり）」</strong>といった致命的な障害が必ず発生します。<br>
+            これらを回避し、24時間安定稼働する堅牢なシステムを構築するために、Role Aが「何をするために」「何が必要で」「どのような手順で実装すべきか」を詳細に定義します。
+        </p>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">1. 開発に必要な環境・情報（準備物）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul>
+                        <li><strong>インフラ:</strong> AWS EC2インスタンス、Tailscale（EC2およびローカルPC）</li>
+                        <li><strong>ハードウェア:</strong> RTSP配信が可能なローカルカメラ（またはスマホのWebカメラ化アプリ）、Cisco Meraki実機</li>
+                        <li><strong>認証情報 (Role Bから受領):</strong> AWS IoT CoreのエンドポイントURL、デバイス証明書、プライベートキー、Root CA</li>
+                        <li><strong>API情報:</strong> Webex Botのアクセストークン、通知先Room ID</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">2. 実装手順と技術的課題の根本解決アプローチ</h3>
         <div class="features-grid">
             <div class="feature-card">
-                <i class="fa-solid fa-video feature-icon"></i>
-                <div class="feature-title">MV Cameraの代替</div>
+                <i class="fa-solid fa-network-wired feature-icon"></i>
+                <div class="feature-title">Step 1: VPN開通と「遅延ゼロ」のカメラ取得</div>
                 <div class="feature-desc">
-                    <ul>
-                        <li>PCの内蔵Webカメラ、またはスマートフォンをWebカメラ化するアプリを使用。</li>
-                        <li>Pythonの <code>cv2.VideoCapture(0)</code> でフレームを取得し、YOLOv8/MediaPipeの入力に流し込む。</li>
-                    </ul>
+                    <p><strong>目的:</strong> EC2からローカルネットワーク内のカメラ映像をリアルタイムに取得する。</p>
+                    <ol>
+                        <li>ローカルPCにTailscaleをインストールし「サブネットルーター」として設定。EC2からカメラのローカルIPへ疎通させる。</li>
+                        <li>PythonのOpenCV (<code>cv2.VideoCapture</code>) を用いてRTSPストリームを取得する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        VPN経由ではパケット遅延が発生しやすく、標準の読み込みでは古いフレームがバッファに溜まり、推論が数秒〜数十秒遅延します。これを防ぐため、<strong>「カメラ読み込み専用のバックグラウンドスレッド」</strong>を作成し、常に最新の1フレームのみを保持し、古いフレームは即座に破棄（ドロップ）する設計を必ず実装してください。
+                    </p>
                 </div>
             </div>
+
             <div class="feature-card">
-                <i class="fa-solid fa-temperature-half feature-icon"></i>
-                <div class="feature-title">MT10 / MT20の代替</div>
+                <i class="fa-solid fa-brain feature-icon"></i>
+                <div class="feature-title">Step 2: AI推論ロジックの構築</div>
                 <div class="feature-desc">
-                    <ul>
-                        <li>PythonスクリプトでダミーのJSONデータを生成し、定期的にMQTTブローカーへPublishする。</li>
-                        <li>初期は公開テストサーバー（<code>test.mosquitto.org</code>）を利用し、AWS IoT Core準備後に切り替え。</li>
+                    <p><strong>目的:</strong> 映像から子供の危険状態を判定する。</p>
+                    <ol>
+                        <li><strong>誤飲防止・侵入検知:</strong> YOLOv8を用いて、特定エリアへの人の侵入や、小さな物体の検出を行う。</li>
+                        <li><strong>転倒・うつ伏せ検知:</strong> MediaPipe Poseを用いて骨格を抽出し、「頭部と足首のY座標の逆転（転倒）」や「顔のキーポイント消失（うつ伏せ）」を数学的に判定する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        EC2（CPU環境）では推論に時間がかかる場合があります。毎フレーム推論すると処理が追いつかないため、「Nフレームに1回だけ推論を実行する（フレームスキップ）」ロジックを組み込み、FPSの低下を防いでください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-brands fa-aws feature-icon"></i>
+                <div class="feature-title">Step 3: AWS IoT CoreへのMQTT送信</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 危険を検知した際、フロントエンド（Role C）へ1秒以内にアラートを届ける。</p>
+                    <ol>
+                        <li>AWS IoT Device SDK v2 を使用し、証明書を用いたmTLS接続を実装する。</li>
+                        <li>危険検知時に、JSON形式のペイロードを特定のトピックへPublishする。</li>
+                        <li>（並行タスク）MT10/MT20のダミーJSONデータを定期的にPublishする別スクリプト（シミュレータ）も作成する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        VPNの鍵更新などでネットワークが瞬断すると、MQTTクライアントがクラッシュします。必ずSDKの<strong>「非同期イベントループ」と「自動再接続機能」</strong>を利用し、オフライン時はメッセージをキューイング（QoS 1）する堅牢な接続クラスを設計してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-comment-dots feature-icon"></i>
+                <div class="feature-title">Step 4: Webex APIへの証拠画像送信</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 危険検知時の状況を、画像付きで保護者のWebexに通知する。</p>
+                    <ol>
+                        <li>検知時のフレーム画像に、YOLOのバウンディングボックスや警告テキストを描画する。</li>
+                        <li><code>requests</code> ライブラリを用いて、Webex Messaging APIへマルチパートデータとしてPOST送信する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        画像をディスクに保存してから送信すると、I/O待ちでシステム全体が数秒間フリーズします。必ず<strong>「メモリ上で直接JPEGエンコード（cv2.imencode）」し、さらに送信処理自体を「別スレッド（ThreadPoolExecutor等）」</strong>に逃がして、メインの推論ループを絶対にブロックしない非同期送信を実装してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <i class="fa-solid fa-gears feature-icon"></i>
+                <div class="feature-title">Step 5: 全体統合とエラーリカバリ</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 上記の全モジュールを統合し、24時間稼働するデーモンプロセスにする。</p>
+                    <p>カメラ取得、AI推論、MQTT送信、Webex送信を1つのメインコントローラークラスに統合します。カメラの接続が切れた場合の「自動再接続ループ」や、APIのタイムアウト例外をキャッチして握り潰さずにリトライ・スキップするエラーハンドリングを網羅してください。</p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. Role B, Cとの連携ポイント（アウトプット）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <p>Role Aの実装が完了したら、以下の情報を他ロールへ共有します。</p>
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Role Bへ:</strong> MQTTで送信するJSONデータのフォーマット（スキーマ）。これによりRole BはDynamoDBへの保存ルールを構築できます。</li>
+                        <li><strong>Role Cへ:</strong> 送信するMQTTの「トピック名」。これによりRole CはReact側でどのトピックをSubscribeすればよいかが確定します。</li>
                     </ul>
                 </div>
             </div>
+        </div>
+
+        <h2 id="role-b-details" class="section-title">6. Role B: バックエンド＆Webexモジュール 実装詳細</h2>
+        <p class="section-desc">
+            Role Bが担当する「バックエンド＆Webexモジュール」は、エッジから送られてくる大量のデータを安全かつ低コストで処理・保存し、外部サービス（Webex）との連携基盤を構築する役割を担います。<strong>「スロットリングによるデータ欠損」や「不適切なクエリによるクラウド破産（青天井課金）」</strong>を防ぐための堅牢な設計が求められます。
+        </p>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">1. 開発に必要な環境・情報（準備物）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul>
+                        <li><strong>インフラ:</strong> AWSアカウント（IoT Core, DynamoDB, IAM, API Gateway, Lambda）</li>
+                        <li><strong>API情報:</strong> Webex Developer Portalアカウント</li>
+                        <li><strong>連携情報 (Role Aから受領):</strong> MQTTで送信されるJSONデータのスキーマ</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">2. 実装手順と技術的課題の根本解決アプローチ</h3>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-database feature-icon"></i>
+                <div class="feature-title">Step 1: IoT CoreルールとDynamoDB連携</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> エッジから送信されるMQTTメッセージを永続化する。</p>
+                    <ol>
+                        <li>IoT Coreのメッセージルーティングルールを作成し、特定トピックのデータをDynamoDBにINSERTするアクションを設定。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        プロビジョニングモード（1WCU固定）で運用するため、バーストトラフィック時に書き込みスロットリングが発生しデータが欠損するリスクがあります。必ずIoT Coreルールの「エラーアクション」を設定し、失敗したメッセージをSQS（Dead Letter Queue）に逃がすか、CloudWatch Logsに記録するフェイルセーフ機構を実装してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-table feature-icon"></i>
+                <div class="feature-title">Step 2: DynamoDBのテーブル設計</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 時系列データを効率的に保存・検索する。</p>
+                    <ol>
+                        <li>パーティションキーを <code>device_id</code>、ソートキーを <code>timestamp</code> に設定してテーブルを作成。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        古いデータが無限に溜まるとストレージコストが増加します。必ずDynamoDBの「TTL（Time to Live）」機能を有効にし、一定期間（例: 30日）経過したレコードが自動的に物理削除される設計にして、コストを最小限に抑えてください。
+                    </p>
+                </div>
+            </div>
+
             <div class="feature-card">
                 <i class="fa-solid fa-server feature-icon"></i>
-                <div class="feature-title">EC2 (Spot)の代替</div>
+                <div class="feature-title">Step 3: 履歴データ取得用APIの構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role C（フロントエンド）が過去のハザードデータを取得できるようにする。</p>
+                    <ol>
+                        <li>API Gatewayを作成し、Lambda関数をトリガー。Lambda内でDynamoDBを検索してJSONを返す。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        DynamoDBの検索時に全件スキャン（Scan）を行うとRCUを大量消費しシステムが停止します。必ずパーティションキーを指定した「Query」操作を実装し、読み込み負荷を最小化してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-robot feature-icon"></i>
+                <div class="feature-title">Step 4: Webex Botのセットアップと権限管理</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role A（EC2）が画像を送信するための通知先と認証情報を用意する。</p>
+                    <ol>
+                        <li>Webex Developer PortalでBotを作成し、テスト用スペースに招待してRoom IDを取得。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        アクセストークンをソースコードにハードコードするとセキュリティインシデントになります。AWS Systems Manager Parameter StoreやSecrets Managerを利用し、環境変数として安全にRole A（EC2）へ渡す仕組みを構築してください。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書、Webex BotのトークンとRoom IDを提供します。</li>
+                        <li><strong>Role Cへ:</strong> 履歴取得APIのエンドポイントURLを提供し、API Gateway側でCORS（Cross-Origin Resource Sharing）の許可設定を行います。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h2 id="role-c-details" class="section-title">7. Role C: フロントエンド＆3Dモジュール 実装詳細</h2>
+        <p class="section-desc">
+            Role Cが担当する「フロントエンド＆3Dモジュール」は、保護者が直感的に状況を把握できるUIを提供する役割を担います。<strong>「巨大な3Dモデルによるブラウザクラッシュ」や「バックグラウンド時のWebSocket切断」</strong>を回避し、モバイル端末でもサクサク動く堅牢なWebアプリケーションを構築する必要があります。
+        </p>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">1. 開発に必要な環境・情報（準備物）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
                     <ul>
-                        <li>開発中は、Role A担当者のローカルPCを「EC2インスタンス」と見立ててAI推論とバックエンド処理を稼働。</li>
-                        <li>コンテナ化（Docker）しておくとAWS移行がスムーズ。</li>
+                        <li><strong>環境:</strong> React, Three.js (@react-three/fiber, @react-three/drei)</li>
+                        <li><strong>アセット:</strong> Polycam等でスキャンした部屋の3Dモデル（.gltf / .glb形式）</li>
+                        <li><strong>連携情報:</strong> Role AからのMQTTトピック名、Role BからのIoT Coreエンドポイント（WebSocket用）と履歴取得APIのURL</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">2. 実装手順と技術的課題の根本解決アプローチ</h3>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-cube feature-icon"></i>
+                <div class="feature-title">Step 1: React + Three.jsによる3D空間の構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Polycamの3Dモデルをブラウザ上でレンダリングする。</p>
+                    <ol>
+                        <li><code>@react-three/fiber</code> をセットアップし、<code>useGLTF</code> フックでモデルを読み込みシーンに配置。OrbitControlsで視点操作を可能にする。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        スキャンした高精細モデルはファイルサイズが大きく、モバイル端末でブラウザがクラッシュします。必ずBlender等で事前にポリゴン数を削減（Decimate）し、テクスチャを圧縮（Draco圧縮等）した軽量な <code>.glb</code> ファイルを使用してください。また、Reactの <code>Suspense</code> を用いてローディングUIを実装しUXの低下を防ぐこと。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-wifi feature-icon"></i>
+                <div class="feature-title">Step 2: MQTT over WebSocketの受信</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 危険検知アラートをブラウザにリアルタイムでポップアップさせる。</p>
+                    <ol>
+                        <li><code>aws-iot-device-sdk-v2</code> (ブラウザ版) または <code>mqtt.js</code> を使用し、IoT CoreにWebSocket接続してトピックをSubscribeする。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        スマホの画面ロックやタブのバックグラウンド化によりWebSocket接続は頻繁に切断されます。切断を検知して自動再接続（Exponential Backoff）を行うロジックを実装し、UI上に「接続中/オフライン」のステータスインジケーターを必ず配置して状態の不整合を防いでください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-crosshairs feature-icon"></i>
+                <div class="feature-title">Step 3: リアルタイムアラートの3Dマッピング</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 受信したアラートの座標を3D空間上に視覚化する。</p>
+                    <ol>
+                        <li>MQTTで受信した2D座標（カメラ画像上のX, Y）を、3D空間の座標（X, Y, Z）に変換し、該当位置に警告マーカーを描画する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        2Dから3Dへの変換はカメラの設置角度や画角に依存するため単純な計算ではずれます。Three.jsの <code>Raycaster</code> を用いて、仮想カメラから3Dモデルの床面に向けてレイを飛ばし、交差判定（Intersection）によって正確な3D座標を算出するロジックを実装してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-fire feature-icon"></i>
+                <div class="feature-title">Step 4: 履歴データの可視化（ヒートマップ）</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 過去の危険エリアを3D空間上に重畳表示する。</p>
+                    <ol>
+                        <li>Role BのAPIから履歴データを取得し、座標データ群を元にヒートマップやパーティクルを生成する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        大量のデータポイントを個別のメッシュとして描画するとドローコールが増大しFPSが著しく低下します。必ずThree.jsの <code>InstancedMesh</code> を使用するか、カスタムシェーダーを用いてGPU側で一括描画するパフォーマンス最適化を行ってください。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Role Aへ:</strong> 3Dマッピングの計算に必要な、カメラの実世界での設置位置（高さ、角度）と画角（FOV）のパラメータを要求します。</li>
+                        <li><strong>Role Bへ:</strong> 履歴取得APIのレスポンスフォーマットのすり合わせと、CORSエラー発生時の対応を依頼します。</li>
                     </ul>
                 </div>
             </div>
