@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role C 実装詳細 - 子供見守りシステム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Role C: フロントエンド＆3Dモジュール</h1>
+        <p>実装詳細とアーキテクチャ要件</p>
+        <div class="header-actions">
+            <a href="index.html" class="btn-primary"><i class="fa-solid fa-arrow-left"></i> トップページへ戻る</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <p class="section-desc">
+            Role Cが担当する「フロントエンド＆3Dモジュール」は、保護者が直感的に状況を把握できるUIを提供する役割を担います。<strong>「巨大な3Dモデルによるブラウザクラッシュ」や「バックグラウンド時のWebSocket切断」</strong>を回避し、モバイル端末でもサクサク動く堅牢なWebアプリケーションを構築する必要があります。
+        </p>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">1. 開発に必要な環境・情報（準備物）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul>
+                        <li><strong>環境:</strong> React, Three.js (@react-three/fiber, @react-three/drei)</li>
+                        <li><strong>アセット:</strong> Polycam等でスキャンした部屋の3Dモデル（.gltf / .glb形式）</li>
+                        <li><strong>連携情報:</strong> Role AからのMQTTトピック名、Role BからのIoT Coreエンドポイント（WebSocket用）と履歴取得APIのURL</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">2. 実装手順と技術的課題の根本解決アプローチ</h3>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-cube feature-icon"></i>
+                <div class="feature-title">Step 1: React + Three.jsによる3D空間の構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Polycamの3Dモデルをブラウザ上でレンダリングする。</p>
+                    <ol>
+                        <li><code>@react-three/fiber</code> をセットアップし、<code>useGLTF</code> フックでモデルを読み込みシーンに配置。OrbitControlsで視点操作を可能にする。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        スキャンした高精細モデルはファイルサイズが大きく、モバイル端末でブラウザがクラッシュします。必ずBlender等で事前にポリゴン数を削減（Decimate）し、テクスチャを圧縮（Draco圧縮等）した軽量な <code>.glb</code> ファイルを使用してください。また、Reactの <code>Suspense</code> を用いてローディングUIを実装しUXの低下を防ぐこと。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-wifi feature-icon"></i>
+                <div class="feature-title">Step 2: MQTT over WebSocketの受信</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 危険検知アラートをブラウザにリアルタイムでポップアップさせる。</p>
+                    <ol>
+                        <li><code>aws-iot-device-sdk-v2</code> (ブラウザ版) または <code>mqtt.js</code> を使用し、IoT CoreにWebSocket接続してトピックをSubscribeする。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        スマホの画面ロックやタブのバックグラウンド化によりWebSocket接続は頻繁に切断されます。切断を検知して自動再接続（Exponential Backoff）を行うロジックを実装し、UI上に「接続中/オフライン」のステータスインジケーターを必ず配置して状態の不整合を防いでください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-crosshairs feature-icon"></i>
+                <div class="feature-title">Step 3: リアルタイムアラートの3Dマッピング</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 受信したアラートの座標を3D空間上に視覚化する。</p>
+                    <ol>
+                        <li>MQTTで受信した2D座標（カメラ画像上のX, Y）を、3D空間の座標（X, Y, Z）に変換し、該当位置に警告マーカーを描画する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        2Dから3Dへの変換はカメラの設置角度や画角に依存するため単純な計算ではずれます。Three.jsの <code>Raycaster</code> を用いて、仮想カメラから3Dモデルの床面に向けてレイを飛ばし、交差判定（Intersection）によって正確な3D座標を算出するロジックを実装してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-fire feature-icon"></i>
+                <div class="feature-title">Step 4: 履歴データの可視化（ヒートマップ）</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 過去の危険エリアを3D空間上に重畳表示する。</p>
+                    <ol>
+                        <li>Role BのAPIから履歴データを取得し、座標データ群を元にヒートマップやパーティクルを生成する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        大量のデータポイントを個別のメッシュとして描画するとドローコールが増大しFPSが著しく低下します。必ずThree.jsの <code>InstancedMesh</code> を使用するか、カスタムシェーダーを用いてGPU側で一括描画するパフォーマンス最適化を行ってください。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Role Aへ:</strong> 3Dマッピングの計算に必要な、カメラの実世界での設置位置（高さ、角度）と画角（FOV）のパラメータを要求します。</li>
+                        <li><strong>Role Bへ:</strong> 履歴取得APIのレスポンスフォーマットのすり合わせと、CORSエラー発生時の対応を依頼します。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

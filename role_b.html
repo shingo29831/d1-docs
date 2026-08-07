@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role B 実装詳細 - 子供見守りシステム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <h1>Role B: バックエンド＆Webexモジュール</h1>
+        <p>実装詳細とアーキテクチャ要件</p>
+        <div class="header-actions">
+            <a href="index.html" class="btn-primary"><i class="fa-solid fa-arrow-left"></i> トップページへ戻る</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <p class="section-desc">
+            Role Bが担当する「バックエンド＆Webexモジュール」は、エッジから送られてくる大量のデータを安全かつ低コストで処理・保存し、外部サービス（Webex）との連携基盤を構築する役割を担います。<strong>「スロットリングによるデータ欠損」や「不適切なクエリによるクラウド破産（青天井課金）」</strong>を防ぐための堅牢な設計が求められます。
+        </p>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">1. 開発に必要な環境・情報（準備物）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul>
+                        <li><strong>インフラ:</strong> AWSアカウント（IoT Core, DynamoDB, IAM, API Gateway, Lambda）</li>
+                        <li><strong>API情報:</strong> Webex Developer Portalアカウント</li>
+                        <li><strong>連携情報 (Role Aから受領):</strong> MQTTで送信されるJSONデータのスキーマ</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">2. 実装手順と技術的課題の根本解決アプローチ</h3>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-database feature-icon"></i>
+                <div class="feature-title">Step 1: IoT CoreルールとDynamoDB連携</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> エッジから送信されるMQTTメッセージを永続化する。</p>
+                    <ol>
+                        <li>IoT Coreのメッセージルーティングルールを作成し、特定トピックのデータをDynamoDBにINSERTするアクションを設定。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        プロビジョニングモード（1WCU固定）で運用するため、バーストトラフィック時に書き込みスロットリングが発生しデータが欠損するリスクがあります。必ずIoT Coreルールの「エラーアクション」を設定し、失敗したメッセージをSQS（Dead Letter Queue）に逃がすか、CloudWatch Logsに記録するフェイルセーフ機構を実装してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-table feature-icon"></i>
+                <div class="feature-title">Step 2: DynamoDBのテーブル設計</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 時系列データを効率的に保存・検索する。</p>
+                    <ol>
+                        <li>パーティションキーを <code>device_id</code>、ソートキーを <code>timestamp</code> に設定してテーブルを作成。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        古いデータが無限に溜まるとストレージコストが増加します。必ずDynamoDBの「TTL（Time to Live）」機能を有効にし、一定期間（例: 30日）経過したレコードが自動的に物理削除される設計にして、コストを最小限に抑えてください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-server feature-icon"></i>
+                <div class="feature-title">Step 3: 履歴データ取得用APIの構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role C（フロントエンド）が過去のハザードデータを取得できるようにする。</p>
+                    <ol>
+                        <li>API Gatewayを作成し、Lambda関数をトリガー。Lambda内でDynamoDBを検索してJSONを返す。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        DynamoDBの検索時に全件スキャン（Scan）を行うとRCUを大量消費しシステムが停止します。必ずパーティションキーを指定した「Query」操作を実装し、読み込み負荷を最小化してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-robot feature-icon"></i>
+                <div class="feature-title">Step 4: Webex Botのセットアップと権限管理</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role A（EC2）が画像を送信するための通知先と認証情報を用意する。</p>
+                    <ol>
+                        <li>Webex Developer PortalでBotを作成し、テスト用スペースに招待してRoom IDを取得。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        アクセストークンをソースコードにハードコードするとセキュリティインシデントになります。AWS Systems Manager Parameter StoreやSecrets Managerを利用し、環境変数として安全にRole A（EC2）へ渡す仕組みを構築してください。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書、Webex BotのトークンとRoom IDを提供します。</li>
+                        <li><strong>Role Cへ:</strong> 履歴取得APIのエンドポイントURLを提供し、API Gateway側でCORS（Cross-Origin Resource Sharing）の許可設定を行います。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
