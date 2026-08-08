@@ -73,13 +73,13 @@
 
             <div class="feature-card">
                 <i class="fa-brands fa-aws feature-icon"></i>
-                <div class="feature-title">Step 3: AWS IoT CoreへのMQTT送信</div>
+                <div class="feature-title">Step 3: Meraki連携とAWS IoT CoreへのMQTT通信</div>
                 <div class="feature-desc">
-                    <p><strong>目的:</strong> 危険を検知した際、フロントエンド（Role C）へ1秒以内にアラートを届ける。</p>
+                    <p><strong>目的:</strong> センサーデータの取得と、危険検知時のリアルタイムアラート送信を行う。</p>
                     <ol>
-                        <li>AWS IoT Device SDK v2 を使用し、証明書を用いたmTLS接続を実装する。</li>
-                        <li>危険検知時に、JSON形式のペイロードを特定のトピックへPublishする。</li>
-                        <li>（並行タスク）MT10/MT20のダミーJSONデータを定期的にPublishする別スクリプト（シミュレータ）も作成する。</li>
+                        <li>MerakiダッシュボードのMQTTエクスポート機能を設定し、MT10/MT20およびMVのArea OccupancyデータをEC2上のローカルブローカー（Mosquitto等）でSubscribeする。</li>
+                        <li>AWS IoT Device SDK v2 を使用し、IoT Coreへ証明書を用いたmTLS接続を実装する。</li>
+                        <li>AIの危険検知結果やMerakiのセンサーデータを統合し、IoT Coreの特定トピックへPublishする。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
@@ -110,6 +110,23 @@
                 <div class="feature-desc">
                     <p><strong>目的:</strong> 上記の全モジュールを統合し、24時間稼働するデーモンプロセスにする。</p>
                     <p>カメラ取得、AI推論、MQTT送信、Webex送信を1つのメインコントローラークラスに統合します。カメラの接続が切れた場合の「自動再接続ループ」や、APIのタイムアウト例外をキャッチして握り潰さずにリトライ・スキップするエラーハンドリングを網羅してください。</p>
+                </div>
+            </div>
+
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <i class="fa-solid fa-chart-line feature-icon"></i>
+                <div class="feature-title">Step 6: 行動パターン解析（Isolation Forest）の実装</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 蓄積されたデータから、普段行かない場所へのアクセスなど潜在的リスクを抽出する。</p>
+                    <ol>
+                        <li><code>boto3</code> を用いて、Role Bが構築したDynamoDBから過去の滞在座標と時間帯データを定期的に（例: 1日1回）取得する。</li>
+                        <li><code>scikit-learn</code> の <code>IsolationForest</code> を用いてデータをクラスタリングし、異常スコアを算出する。</li>
+                        <li>算出されたリスクエリアの座標データを、IoT Core経由またはDynamoDBへ書き戻し、Role Cのダッシュボードにサジェストする。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        リアルタイムのAI推論ループ（Step 2）と同じスレッドで機械学習のバッチ処理を実行すると、カメラ映像の処理が完全に停止します。必ず <code>cron</code> 等を用いた別プロセス、または完全に独立した非同期タスクとして実行し、メインの監視システムに一切の負荷をかけない設計にしてください。
+                    </p>
                 </div>
             </div>
         </div>
