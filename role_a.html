@@ -28,7 +28,7 @@
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
                     <ul>
-                        <li><strong>インフラ:</strong> AWS EC2インスタンス、Tailscale（EC2およびローカルPC）、学校配布のIAMユーザー（アクセスキー/シークレットキー）</li>
+                        <li><strong>インフラ:</strong> AWS EC2インスタンス、Tailscale（EC2およびローカルPC）、学校配布のIAMユーザー（コンソールから自身でアクセスキーを発行して使用）</li>
                         <li><strong>ハードウェア:</strong> RTSP配信が可能なローカルカメラ（またはスマホのWebカメラ化アプリ）、Cisco Meraki実機</li>
                         <li><strong>認証情報 (Role Bから受領):</strong> AWS IoT CoreのエンドポイントURL、デバイス証明書、プライベートキー、Root CA</li>
                         <li><strong>API情報:</strong> Webex Botのアクセストークン、通知先Room ID</li>
@@ -45,12 +45,13 @@
                 <div class="feature-desc">
                     <p><strong>目的:</strong> アプリケーション実行基盤を構築し、AWSリソースへのアクセスを可能にする。</p>
                     <ol>
-                        <li>EC2インスタンスをプロビジョニングする。</li>
-                        <li>EC2にSSHログインし、<code>aws configure</code> コマンドを実行して、学校から配布されたIAMユーザーのアクセスキーとシークレットキーを設定する。</li>
+                        <li>AWSマネジメントコンソールにログインし、IAMの画面から自身のユーザーの「セキュリティ認証情報」タブを開き、<strong>「アクセスキーを作成」</strong>を実行してアクセスキーとシークレットキーを取得する。</li>
+                        <li>EC2インスタンスをプロビジョニングし、SSHログインする。</li>
+                        <li>EC2上で <code>aws configure</code> コマンドを実行し、手順1で取得したアクセスキーとシークレットキーを設定する。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        学校配布のIAMユーザーはIAMロールの作成・アタッチ権限がないため、アクセスキーを使用します。しかし、ソースコード内にキーをハードコードすることは厳禁です。必ず <code>aws configure</code> を用いて <code>~/.aws/credentials</code> に安全に保存し、AWS SDK (boto3等) に自動で読み込ませるセキュアな実装を徹底してください。
+                        プログラムからAWSリソース（IoT Core等）にアクセスするにはアクセスキーが必須です。しかし、ソースコード内にキーを直接書き込む（ハードコードする）ことは厳禁です。必ず <code>aws configure</code> を用いて <code>~/.aws/credentials</code> に安全に保存し、AWS SDK (boto3等) に自動で読み込ませるセキュアな実装を徹底してください。
                     </p>
                 </div>
             </div>
