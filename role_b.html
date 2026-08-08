@@ -86,17 +86,19 @@
 
             <div class="feature-card">
                 <i class="fa-solid fa-server feature-icon"></i>
-                <div class="feature-title">Step 4: セキュアな履歴データ取得用APIの構築</div>
+                <div class="feature-title">Step 4: API Gateway + Lambdaによる履歴取得APIの構築</div>
                 <div class="feature-desc">
-                    <p><strong>目的:</strong> Role C（フロントエンド）が過去のハザードデータを安全に取得できるようにする。</p>
+                    <p><strong>目的:</strong> Role C（フロントエンド）が過去のハザードデータを安全かつ確実に取得できるようにする。</p>
                     <ol>
-                        <li>API Gatewayを作成し、Cognito User Pool AuthorizerをアタッチしてAPIを保護する。</li>
-                        <li>Lambda関数をトリガーし、DynamoDBのGSIに対して <code>Query</code> を実行してJSONを返す。</li>
+                        <li>API Gateway（HTTP API または REST API）を作成し、Cognito User Pool Authorizerをアタッチしてエンドポイントを保護する。</li>
+                        <li>バックエンドとしてAWS Lambda関数（起動が高速なNode.jsまたはPythonを採用）を構築し、DynamoDBのGSIに対して <code>Query</code> を実行する。</li>
+                        <li>Lambdaのプロキシ統合レスポンスとして、取得したデータをJSONフォーマットで返却する。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        APIをパブリックに公開すると、DDoS攻撃等によりリソースが枯渇します。必ずCognito Authorizerを用いてJWTトークンを検証してください。<br>
-                        ※初期フェーズでは認証（ログイン確認）のみ行います。後日マルチテナント化する際、Lambda内で <code>event.requestContext.authorizer.claims.sub</code> を取得し、他人の家のデータを取得できないよう認可制御（IDOR対策）を追加します。
+                        <strong>1. CORSエラーの確実な防止:</strong> API Gateway側でのCORS設定だけでなく、Lambda関数からの戻り値（レスポンスヘッダー）にも必ず <code>Access-Control-Allow-Origin</code> などのCORSヘッダーを含めてください。これが欠落するとRole Cのブラウザ側で通信が遮断されます。<br>
+                        <strong>2. 不正クエリによるDB負荷の防止:</strong> フロントエンドから渡されるクエリパラメータ（<code>start_time</code>, <code>end_time</code> 等）をLambda内で厳格に型検証（バリデーション）し、不正な値の場合はDynamoDBへアクセスする前に <code>400 Bad Request</code> を返すフェイルセーフを実装してください。<br>
+                        <strong>3. 認可制御（将来拡張）:</strong> 初期フェーズは認証のみですが、マルチテナント化の際はLambda内で <code>event.requestContext.authorizer.claims.sub</code> を検証し、他人のデータを取得できないIDOR対策を追加します。
                     </p>
                 </div>
             </div>
