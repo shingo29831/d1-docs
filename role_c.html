@@ -29,7 +29,7 @@
                     <ul>
                         <li><strong>環境:</strong> React, Three.js (@react-three/fiber, @react-three/drei)</li>
                         <li><strong>アセット:</strong> Polycam等でスキャンした部屋の3Dモデル（.gltf / .glb形式）</li>
-                        <li><strong>連携情報:</strong> Role AからのMQTTトピック名、Role BからのIoT Coreエンドポイント（WebSocket用）と履歴取得APIのURL</li>
+                        <li><strong>連携情報:</strong> Role AからのMQTTトピック名、Role Bからの履歴取得APIのURL。およびWebSocket接続用の<strong>「IoT Coreエンドポイント」「Cognito Identity Pool ID」「AWSリージョン」</strong>。</li>
                     </ul>
                 </div>
             </div>
@@ -58,7 +58,8 @@
                 <div class="feature-desc">
                     <p><strong>目的:</strong> 危険検知アラートをブラウザにリアルタイムでポップアップさせる。</p>
                     <ol>
-                        <li><code>aws-iot-device-sdk-v2</code> (ブラウザ版) または <code>mqtt.js</code> を使用し、IoT CoreにWebSocket接続してトピックをSubscribeする。</li>
+                        <li>AWS SDKを用いてCognito Identity Poolから一時クレデンシャルを取得する。</li>
+                        <li>取得したクレデンシャルでSigV4署名付きURLを生成し、<code>aws-iot-device-sdk-v2</code> (ブラウザ版) または <code>mqtt.js</code> でIoT CoreにWebSocket接続してトピックをSubscribeする。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>

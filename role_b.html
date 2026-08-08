@@ -96,6 +96,22 @@
                     </p>
                 </div>
             </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-id-badge feature-icon"></i>
+                <div class="feature-title">Step 5: フロントエンド用認証基盤（Cognito）の構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role C（ブラウザ）がIoT Coreへ安全にWebSocket接続できるようにする。</p>
+                    <ol>
+                        <li>Amazon Cognitoで「IDプール（Identity Pool）」を作成し、未認証（Unauthenticated）ゲストアクセスを許可する。</li>
+                        <li>未認証ロールのIAMポリシーに <code>iot:Connect</code>, <code>iot:Subscribe</code>, <code>iot:Receive</code> 権限を付与する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        ブラウザからはデバイス証明書（mTLS）が利用できないため、Cognitoを利用した一時クレデンシャルによるSigV4署名が必須となります。IAMポリシーのResource句は <code>*</code> にせず、Role CがSubscribeする特定のトピック（Role Aが送信するトピック）のみに制限し、最小権限の原則を徹底してください。
+                    </p>
+                </div>
+            </div>
         </div>
 
         <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
@@ -104,7 +120,7 @@
                 <div class="feature-desc">
                     <ul style="margin-top: 10px;">
                         <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書、Webex BotのトークンとRoom IDを提供します。</li>
-                        <li><strong>Role Cへ:</strong> 履歴取得APIのエンドポイントURLを提供し、API Gateway側でCORS（Cross-Origin Resource Sharing）の許可設定を行います。</li>
+                        <li><strong>Role Cへ:</strong> 履歴取得APIのエンドポイントURLを提供し、API Gateway側でCORSの許可設定を行います。また、WebSocket接続用に<strong>「IoT Coreエンドポイント」「Cognito Identity Pool ID」「AWSリージョン」</strong>の3点を提供します。</li>
                     </ul>
                 </div>
             </div>

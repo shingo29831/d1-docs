@@ -45,6 +45,7 @@
                         EC2[Amazon EC2<br>Spot Instance]
                         DB[(Amazon DynamoDB<br>Provisioned: 1WCU)]
                         S3[Amazon S3 + CloudFront]
+                        Cog[Amazon Cognito]
                     end
                     
                     subgraph UI_Layer ["Frontend & Notification"]
@@ -67,6 +68,8 @@
                     DB -- Fetch Hazard Data --> UI
                     PC -- .gltf Model --> UI
                     
+                    UI -- Get Credentials --> Cog
+                    Cog -. SigV4 Auth .-> IoT
                     IoT -. MQTT over WebSocket<br>(Real-time Alert) .-> UI
                     
                     classDef meraki fill:#74b82d,stroke:#fff,stroke-width:2px,color:#fff;
@@ -190,6 +193,7 @@
                 <ul class="tech-list">
                     <li>AWS IoT Core (MQTT / WebSocket)</li>
                     <li>Amazon EC2 (Spot) / DynamoDB / S3</li>
+                    <li>Amazon Cognito (Identity Pool)</li>
                     <li>Cisco Webex Messaging API</li>
                 </ul>
             </div>
@@ -233,8 +237,8 @@
                     <p><strong>ミッション:</strong> クラウドインフラ構築と外部API連携</p>
                     <ul>
                         <li>AWS IoT Coreの受け口作成とDynamoDBへのデータ保存</li>
+                        <li>フロントエンド向け認証基盤（Cognito）と履歴取得APIの構築</li>
                         <li>Webex Messaging APIを利用したアラート・画像送信処理</li>
-                        <li>※初期はローカルNode.js/PythonサーバーとSQLiteで代替可</li>
                     </ul>
                     <a href="role_b.html" style="display: inline-block; margin-top: 15px; font-weight: bold; color: #00bceb; text-decoration: none;"><i class="fa-solid fa-circle-info"></i> 実装詳細と課題解決策を見る</a>
                 </div>
