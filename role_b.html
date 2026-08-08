@@ -73,7 +73,7 @@
                 <div class="feature-desc">
                     <p><strong>目的:</strong> プライバシー情報を保護し、認証済みユーザーのみがシステムにアクセスできるようにする。</p>
                     <ol>
-                        <li><strong>API認証用:</strong> Amazon Cognitoで「ユーザープール」を作成し、保護者用のアカウントを発行する（Google等の外部IdP連携は不要。ユーザープール内のローカルユーザーのみをIDソースとする）。</li>
+                        <li><strong>API認証用:</strong> Amazon Cognitoで「ユーザープール」を作成し、保護者用のアカウントを発行する。サインイン識別子には<strong>「メールアドレス」</strong>を選択する（電話番号はSMS送信制限の解除に時間がかかりハッカソンに不向きなため）。</li>
                         <li><strong>IoT Core接続用:</strong> 「IDプール」を作成し、認証プロバイダーとして<strong>「Amazon Cognito」</strong>を選択する。そこに上記で作成した「ユーザープールID」と「アプリクライアントID」を設定して紐付ける。</li>
                         <li>IDプールの「認証済みロール」のIAMポリシーに <code>iot:Connect</code>, <code>iot:Subscribe</code>, <code>iot:Receive</code> 権限を付与する（未認証アクセスは無効化）。</li>
                     </ol>
