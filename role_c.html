@@ -97,6 +97,22 @@
                     </p>
                 </div>
             </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-rocket feature-icon"></i>
+                <div class="feature-title">Step 5: プロダクションビルドとデプロイ</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 完成したWebアプリケーションをAWS環境に公開する。</p>
+                    <ol>
+                        <li>ViteやWebpack等でReactアプリのプロダクションビルド（<code>npm run build</code>）を実行する。</li>
+                        <li>生成された静的ファイルを、Role Bが用意したS3バケットにアップロードする。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        React Router等でクライアントサイドルーティングを行っている場合、S3/CloudFront上で直接URLアクセスすると404エラーになります。CloudFrontのエラーページ設定で、404エラー時に <code>/index.html</code> を返しステータスコードを200にするよう、Role Bに設定を依頼してください。
+                    </p>
+                </div>
+            </div>
         </div>
 
         <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
@@ -105,7 +121,7 @@
                 <div class="feature-desc">
                     <ul style="margin-top: 10px;">
                         <li><strong>Role Aへ:</strong> 3Dマッピングの計算に必要な、カメラの実世界での設置位置（高さ、角度）と画角（FOV）のパラメータを要求します。</li>
-                        <li><strong>Role Bへ:</strong> 履歴取得APIのレスポンスフォーマットのすり合わせと、CORSエラー発生時の対応を依頼します。</li>
+                        <li><strong>Role Bへ:</strong> 履歴取得APIのレスポンスフォーマットのすり合わせ、CORSエラー発生時の対応、およびCloudFrontのルーティング（404エラー時のindex.htmlフォールバック）設定を依頼します。</li>
                     </ul>
                 </div>
             </div>

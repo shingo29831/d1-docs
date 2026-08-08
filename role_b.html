@@ -89,10 +89,11 @@
                     <p><strong>目的:</strong> Role A（EC2）が画像を送信するための通知先と認証情報を用意する。</p>
                     <ol>
                         <li>Webex Developer PortalでBotを作成し、テスト用スペースに招待してRoom IDを取得。</li>
+                        <li>取得した情報をAWS Systems Manager Parameter Storeにセキュア文字列として保存する。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        アクセストークンをソースコードにハードコードするとセキュリティインシデントになります。AWS Systems Manager Parameter StoreやSecrets Managerを利用し、環境変数として安全にRole A（EC2）へ渡す仕組みを構築してください。
+                        アクセストークンをソースコードにハードコードするとセキュリティインシデントになります。Role AのEC2インスタンスがParameter Storeから安全に値を取得できるよう、EC2にアタッチするIAMロールに <code>ssm:GetParameter</code> 権限を必ず付与してインフラを構築してください。
                     </p>
                 </div>
             </div>
@@ -112,6 +113,22 @@
                     </p>
                 </div>
             </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-cloud-arrow-up feature-icon"></i>
+                <div class="feature-title">Step 6: フロントエンド用ホスティング環境の構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role Cが開発した専用サイトをインターネット上に公開する。</p>
+                    <ol>
+                        <li>Amazon S3バケットを作成し、静的ウェブサイトホスティングを有効化する。</li>
+                        <li>Amazon CloudFrontディストリビューションを作成し、S3をオリジンとして設定する（OACを利用してS3を非公開化）。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        S3バケットを直接パブリック公開すると、意図しないアクセスによるデータ転送料金が高騰するリスクがあります。必ずCloudFrontを前段に配置し、S3バケットポリシーでCloudFrontからのアクセスのみを許可するセキュアな構成にしてください。
+                    </p>
+                </div>
+            </div>
         </div>
 
         <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
@@ -119,8 +136,8 @@
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
                     <ul style="margin-top: 10px;">
-                        <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書、Webex BotのトークンとRoom IDを提供します。</li>
-                        <li><strong>Role Cへ:</strong> 履歴取得APIのエンドポイントURLを提供し、API Gateway側でCORSの許可設定を行います。また、WebSocket接続用に<strong>「IoT Coreエンドポイント」「Cognito Identity Pool ID」「AWSリージョン」</strong>の3点を提供します。</li>
+                        <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書、およびParameter Storeに保存したWebex Botのパラメータ名を提供し、EC2にIAMロールをアタッチします。</li>
+                        <li><strong>Role Cへ:</strong> 履歴取得APIのURL（CORS許可済み）、WebSocket接続用の<strong>「IoT Coreエンドポイント」「Cognito Identity Pool ID」「AWSリージョン」</strong>、およびデプロイ先の<strong>S3バケット名</strong>を提供します。</li>
                     </ul>
                 </div>
             </div>
