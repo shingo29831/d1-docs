@@ -35,45 +35,45 @@
             <div class="mermaid">
                 graph TD
                     subgraph Edge ["Cisco Meraki Edge"]
-                        C[MV Camera]
-                        T[MT10: Temp/Humidity]
-                        D[MT20: Door Sensor]
+                        C["MV Camera"]
+                        T["MT10: Temp/Humidity"]
+                        D["MT20: Door Sensor"]
                     end
                     
                     subgraph AWS ["AWS Cloud (Cost Optimized)"]
-                        IoT[AWS IoT Core]
-                        EC2[Amazon EC2<br>Spot Instance]
-                        DB[(Amazon DynamoDB<br>Provisioned: 1WCU)]
-                        S3[Amazon S3 + CloudFront]
-                        Cog[Amazon Cognito<br>User Pool + Identity Pool]
-                        API[API Gateway + Lambda]
+                        IoT["AWS IoT Core"]
+                        EC2["Amazon EC2<br>Spot Instance"]
+                        DB[("Amazon DynamoDB<br>Provisioned: 1WCU")]
+                        S3["Amazon S3 + CloudFront"]
+                        Cog["Amazon Cognito<br>User Pool + Identity Pool"]
+                        API["API Gateway + Lambda"]
                     end
                     
                     subgraph UI_Layer ["Frontend & Notification"]
-                        UI[Dedicated Site<br>React + Three.js]
-                        PC[Polycam 3D Model]
-                        Webex[Cisco Webex<br>Bot / Space]
+                        UI["Dedicated Site<br>React + Three.js"]
+                        PC["Polycam 3D Model"]
+                        Webex["Cisco Webex<br>Bot / Space"]
                     end
 
-                    C -- Area Occupancy / Audio --> IoT
-                    T -- Temp Alert --> IoT
-                    D -- Door Open --> IoT
+                    C -- "Area Occupancy / Audio" --> IoT
+                    T -- "Temp Alert" --> IoT
+                    D -- "Door Open" --> IoT
                     
-                    IoT -- MQTT Trigger --> EC2
-                    EC2 -- Fetch RTSP Stream --> C
+                    IoT -- "MQTT Trigger" --> EC2
+                    EC2 -- "Fetch RTSP Stream" --> C
                     
-                    EC2 -- 1. AI Inference --> DB
-                    EC2 -- 2. Send Alert + Image --> Webex
+                    EC2 -- "1. AI Inference" --> DB
+                    EC2 -- "2. Send Alert + Image" --> Webex
                     
-                    S3 -- Host Static Assets --> UI
-                    DB -- Fetch Hazard Data --> API
-                    API -- JSON Response --> UI
-                    PC -- .gltf Model --> UI
+                    S3 -- "Host Static Assets" --> UI
+                    DB -- "Fetch Hazard Data" --> API
+                    API -- "JSON Response" --> UI
+                    PC -- ".gltf Model" --> UI
                     
-                    UI -- 1. Login / Auth --> Cog
-                    Cog -. 2. SigV4 Auth .-> IoT
-                    Cog -. 3. JWT Auth .-> API
-                    IoT -. MQTT over WebSocket<br>(Real-time Alert) .-> UI
+                    UI -- "1. Login / Auth" --> Cog
+                    Cog -. "2. SigV4 Auth" .-> IoT
+                    Cog -. "3. JWT Auth" .-> API
+                    IoT -. "MQTT over WebSocket<br>(Real-time Alert)" .-> UI
                     
                     classDef meraki fill:#74b82d,stroke:#fff,stroke-width:2px,color:#fff;
                     classDef aws fill:#FF9900,stroke:#fff,stroke-width:2px,color:#232F3E;
