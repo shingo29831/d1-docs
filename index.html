@@ -213,7 +213,7 @@
         </div>
 
         <h2 id="team-roles" class="section-title">4. チーム開発体制と役割分担 (計5名)</h2>
-        <p class="section-desc">依存関係を最小限に抑えた疎結合な3つのコアロールと、全体を横断的に支援するサポートロールに分割し、開発を効率的に進めます。※Role A/BはIAM管理者権限を保有し、自律的にインフラ構築を行います。</p>
+        <p class="section-desc">依存関係を最小限に抑えた疎結合な3つのコアロールと、全体を横断的に支援するサポートロールに分割し、開発を効率的に進めます。<br><strong>【開発フェーズと権限の前提】</strong><br>・<strong>権限:</strong> 学校から配布されたIAMユーザーを使用します（IAMロール作成権限なし）。EC2等の認証は <code>aws configure</code> でアクセスキーを設定します。<br>・<strong>スコープ:</strong> 開発パンクを防ぐため、初期は「1家族（単一テナント）向け」として構築し、後日DB設計変更とLambda認可制御を追加して「複数家族（マルチテナント）対応」へ拡張する段階的アプローチをとります。</p>
         
         <div class="roles-grid">
             <div class="role-card">

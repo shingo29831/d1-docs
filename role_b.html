@@ -27,7 +27,7 @@
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
                     <ul>
-                        <li><strong>インフラ:</strong> AWSアカウント（IoT Core, DynamoDB, API Gateway, Lambda, Cognito, S3, CloudFront）、IAM管理者権限</li>
+                        <li><strong>インフラ:</strong> AWSアカウント（IoT Core, DynamoDB, API Gateway, Lambda, Cognito, S3, CloudFront）、学校配布のIAMユーザー</li>
                         <li><strong>連携情報 (Role Aから受領):</strong> MQTTで送信されるJSONデータのスキーマ</li>
                     </ul>
                 </div>
@@ -95,7 +95,8 @@
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        APIをパブリックに公開すると、DDoS攻撃や不正アクセスによりLambdaの実行回数とDynamoDBのRCUが枯渇します。必ずCognito Authorizerを用いて、リクエストヘッダのJWTトークンを検証する認可プロセスを挟んでください。
+                        APIをパブリックに公開すると、DDoS攻撃等によりリソースが枯渇します。必ずCognito Authorizerを用いてJWTトークンを検証してください。<br>
+                        ※初期フェーズでは認証（ログイン確認）のみ行います。後日マルチテナント化する際、Lambda内で <code>event.requestContext.authorizer.claims.sub</code> を取得し、他人の家のデータを取得できないよう認可制御（IDOR対策）を追加します。
                     </p>
                 </div>
             </div>
@@ -122,7 +123,7 @@
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
                     <ul style="margin-top: 10px;">
-                        <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書の提供。※IAMロールの作成はRole A自身が行います。</li>
+                        <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書の提供。</li>
                         <li><strong>Role Cへ:</strong> 履歴取得APIのURL（CORS許可済み）、WebSocket接続および認証用の<strong>「IoT Coreエンドポイント」「Cognito User Pool ID」「Cognito Client ID」「Identity Pool ID」「AWSリージョン」</strong>、およびデプロイ先の<strong>S3バケット名</strong>を提供します。</li>
                     </ul>
                 </div>
