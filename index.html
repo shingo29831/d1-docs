@@ -45,7 +45,8 @@
                         EC2[Amazon EC2<br>Spot Instance]
                         DB[(Amazon DynamoDB<br>Provisioned: 1WCU)]
                         S3[Amazon S3 + CloudFront]
-                        Cog[Amazon Cognito]
+                        Cog[Amazon Cognito<br>User Pool + Identity Pool]
+                        API[API Gateway + Lambda]
                     end
                     
                     subgraph UI_Layer ["Frontend & Notification"]
@@ -65,11 +66,13 @@
                     EC2 -- 2. Send Alert + Image --> Webex
                     
                     S3 -- Host Static Assets --> UI
-                    DB -- Fetch Hazard Data --> UI
+                    DB -- Fetch Hazard Data --> API
+                    API -- JSON Response --> UI
                     PC -- .gltf Model --> UI
                     
-                    UI -- Get Credentials --> Cog
-                    Cog -. SigV4 Auth .-> IoT
+                    UI -- 1. Login / Auth --> Cog
+                    Cog -. 2. SigV4 Auth .-> IoT
+                    Cog -. 3. JWT Auth .-> API
                     IoT -. MQTT over WebSocket<br>(Real-time Alert) .-> UI
                     
                     classDef meraki fill:#74b82d,stroke:#fff,stroke-width:2px,color:#fff;
@@ -78,7 +81,7 @@
                     classDef cisco fill:#00bceb,stroke:#fff,stroke-width:2px,color:#fff;
                     
                     class C,T,D meraki;
-                    class IoT,EC2,DB,S3 aws;
+                    class IoT,EC2,DB,S3,Cog,API aws;
                     class UI ui;
                     class Webex cisco;
             </div>
@@ -86,7 +89,8 @@
                 <strong>【通知機能とコスト最適化のポイント】</strong><br>
                 1. <strong>Cisco Webex連携</strong>: EC2上のAIが危険を検知した際、YOLOで枠を描画した証拠画像をWebex API経由でチャットルームに即時送信（API利用無料）。<br>
                 2. <strong>専用サイトへのリアルタイム通知</strong>: AWS IoT Coreの「MQTT over WebSocket」をフロントエンドから直接購読。追加サーバーなしでブラウザへの即時ポップアップを実現。<br>
-                3. <strong>Amazon DynamoDB</strong>: プロビジョニングモードで上限を最小（1WCU/1RCU）に固定し自動拡張をOFF。万が一バグで暴走しても月額約100円で課金が物理的にストップ（青天井リスクゼロ）。
+                3. <strong>Amazon DynamoDB</strong>: プロビジョニングモードで上限を最小（1WCU/1RCU）に固定し自動拡張をOFF。万が一バグで暴走しても月額約100円で課金が物理的にストップ（青天井リスクゼロ）。<br>
+                4. <strong>セキュアなアクセス制御</strong>: Cognito User Poolによる認証を必須とし、プライバシー情報の漏洩を防止。
             </p>
         </div>
 
@@ -193,7 +197,7 @@
                 <ul class="tech-list">
                     <li>AWS IoT Core (MQTT / WebSocket)</li>
                     <li>Amazon EC2 (Spot) / DynamoDB / S3</li>
-                    <li>Amazon Cognito (Identity Pool)</li>
+                    <li>Amazon Cognito (User Pool / Identity Pool)</li>
                     <li>Cisco Webex Messaging API</li>
                 </ul>
             </div>
@@ -209,7 +213,7 @@
         </div>
 
         <h2 id="team-roles" class="section-title">4. チーム開発体制と役割分担 (計5名)</h2>
-        <p class="section-desc">依存関係を最小限に抑えた疎結合な3つのコアロールと、全体を横断的に支援するサポートロールに分割し、開発を効率的に進めます。</p>
+        <p class="section-desc">依存関係を最小限に抑えた疎結合な3つのコアロールと、全体を横断的に支援するサポートロールに分割し、開発を効率的に進めます。※Role A/BはIAM管理者権限を保有し、自律的にインフラ構築を行います。</p>
         
         <div class="roles-grid">
             <div class="role-card">
@@ -220,6 +224,7 @@
                 <div class="role-body">
                     <p><strong>ミッション:</strong> エッジデバイス連携とクラウド上でのAI推論</p>
                     <ul>
+                        <li>EC2のプロビジョニングと専用IAMロールの自律的構築</li>
                         <li>EC2上でのYOLOv8/MediaPipe稼働とRTSPカメラ映像の取得</li>
                         <li>Cisco Meraki実機からのデータ取得とAWS IoT Coreへの送信</li>
                         <li>Scikit-learnを用いた行動パターン解析（異常検知）の実行</li>
@@ -237,7 +242,8 @@
                     <p><strong>ミッション:</strong> クラウドインフラ構築と外部API連携</p>
                     <ul>
                         <li>AWS IoT Coreの受け口作成とDynamoDBへのデータ保存</li>
-                        <li>フロントエンド向け認証基盤（Cognito）と履歴取得APIの構築</li>
+                        <li>フロントエンド向け認証基盤（Cognito User Pool等）の構築</li>
+                        <li>API Gateway + Lambdaによるセキュアな履歴取得APIの構築</li>
                         <li>Webex Botのプロビジョニングとフロントエンド用ホスティング環境の構築</li>
                     </ul>
                     <a href="role_b.html" style="display: inline-block; margin-top: 15px; font-weight: bold; color: #00bceb; text-decoration: none;"><i class="fa-solid fa-circle-info"></i> 実装詳細と課題解決策を見る</a>
@@ -252,9 +258,10 @@
                 <div class="role-body">
                     <p><strong>ミッション:</strong> 専用サイトのUI構築とリアルタイム描画</p>
                     <ul>
-                        <li>React + Three.jsの環境構築</li>
+                        <li>React + Three.jsの環境構築とログインUIの実装</li>
                         <li>Polycamで生成した.gltfモデルの読み込みと表示</li>
                         <li>MQTT over WebSocketによるアラートの即時ポップアップ処理</li>
+                        <li>カメラパラメータを用いた2D/3D座標変換とヒートマップ描画</li>
                     </ul>
                     <a href="role_c.html" style="display: inline-block; margin-top: 15px; font-weight: bold; color: #00bceb; text-decoration: none;"><i class="fa-solid fa-circle-info"></i> 実装詳細と課題解決策を見る</a>
                 </div>

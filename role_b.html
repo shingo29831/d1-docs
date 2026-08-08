@@ -19,7 +19,7 @@
 
     <div class="container">
         <p class="section-desc">
-            Role Bが担当する「バックエンド＆Webexモジュール」は、エッジから送られてくる大量のデータを安全かつ低コストで処理・保存し、外部サービス（Webex）との連携基盤を構築する役割を担います。<strong>「スロットリングによるデータ欠損」や「不適切なクエリによるクラウド破産（青天井課金）」</strong>を防ぐための堅牢な設計が求められます。
+            Role Bが担当する「バックエンド＆Webexモジュール」は、エッジから送られてくる大量のデータを安全かつ低コストで処理・保存し、外部サービス（Webex）との連携基盤を構築する役割を担います。<strong>「スロットリングによるデータ欠損」や「不適切なクエリによるクラウド破産（青天井課金）」、さらには「プライバシー情報の漏洩」</strong>を防ぐための堅牢な設計が求められます。
         </p>
 
         <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">1. 開発に必要な環境・情報（準備物）</h3>
@@ -27,8 +27,7 @@
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
                     <ul>
-                        <li><strong>インフラ:</strong> AWSアカウント（IoT Core, DynamoDB, IAM, API Gateway, Lambda）</li>
-                        <li><strong>API情報:</strong> Webex Developer Portalアカウント</li>
+                        <li><strong>インフラ:</strong> AWSアカウント（IoT Core, DynamoDB, API Gateway, Lambda, Cognito, S3, CloudFront）、IAM管理者権限</li>
                         <li><strong>連携情報 (Role Aから受領):</strong> MQTTで送信されるJSONデータのスキーマ</li>
                     </ul>
                 </div>
@@ -54,70 +53,56 @@
 
             <div class="feature-card">
                 <i class="fa-solid fa-table feature-icon"></i>
-                <div class="feature-title">Step 2: DynamoDBのテーブル設計</div>
+                <div class="feature-title">Step 2: DynamoDBのテーブル設計（GSIの活用）</div>
                 <div class="feature-desc">
-                    <p><strong>目的:</strong> 時系列データを効率的に保存・検索する。</p>
+                    <p><strong>目的:</strong> 時系列データを効率的に保存し、かつ空間単位で一括検索できるようにする。</p>
                     <ol>
-                        <li>パーティションキーを <code>device_id</code>、ソートキーを <code>timestamp</code> に設定してテーブルを作成。</li>
+                        <li>基本テーブル: パーティションキー(PK)を <code>device_id</code>、ソートキー(SK)を <code>timestamp</code> に設定。</li>
+                        <li>グローバルセカンダリインデックス(GSI): PKを <code>room_id</code>、SKを <code>timestamp</code> に設定。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        古いデータが無限に溜まるとストレージコストが増加します。必ずDynamoDBの「TTL（Time to Live）」機能を有効にし、一定期間（例: 30日）経過したレコードが自動的に物理削除される設計にして、コストを最小限に抑えてください。
-                    </p>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <i class="fa-solid fa-server feature-icon"></i>
-                <div class="feature-title">Step 3: 履歴データ取得用APIの構築</div>
-                <div class="feature-desc">
-                    <p><strong>目的:</strong> Role C（フロントエンド）が過去のハザードデータを取得できるようにする。</p>
-                    <ol>
-                        <li>API Gatewayを作成し、Lambda関数をトリガー。Lambda内でDynamoDBを検索してJSONを返す。</li>
-                    </ol>
-                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
-                        <strong>【重要】技術的課題と根本解決:</strong><br>
-                        DynamoDBの検索時に全件スキャン（Scan）を行うとRCUを大量消費しシステムが停止します。必ずパーティションキーを指定した「Query」操作を実装し、読み込み負荷を最小化してください。
-                    </p>
-                </div>
-            </div>
-
-            <div class="feature-card">
-                <i class="fa-solid fa-shield-halved feature-icon"></i>
-                <div class="feature-title">Step 4: EC2用IAMロールの構築とWebex権限管理</div>
-                <div class="feature-desc">
-                    <p><strong>目的:</strong> Role A（EC2）がAWSリソースや外部APIへ安全にアクセスできる環境を整える。</p>
-                    <ol>
-                        <li>Webex Developer PortalでBotを作成し、Room IDと共にAWS Systems Manager Parameter Storeにセキュア文字列として保存する。</li>
-                        <li>EC2インスタンスプロファイル（IAMロール）を作成し、<code>ssm:GetParameter</code> 権限を付与する。</li>
-                        <li>Role Aが行動パターン解析を行えるよう、同IAMロールにDynamoDBの <code>dynamodb:Scan</code> および <code>dynamodb:Query</code> 権限を追加する。</li>
-                    </ol>
-                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
-                        <strong>【重要】技術的課題と根本解決:</strong><br>
-                        アクセストークンやAWSクレデンシャルをソースコードにハードコードすると重大なセキュリティインシデントになります。必ずIAMロール（インスタンスプロファイル）を介して権限を付与し、Role Aがコード内でクレデンシャルを管理しなくて済むセキュアなインフラを構築してください。
+                        複数カメラがある部屋全体のハザードデータを取得する際、<code>device_id</code> がPKだと複数回のクエリや全件スキャンが必要になります。必ず <code>room_id</code> をPKとするGSIを設計し、1回のQuery操作で特定期間・特定空間のデータを取得できるようにしてRCU消費を抑えてください。また、TTL（Time to Live）を有効にし、古いデータを自動削除すること。
                     </p>
                 </div>
             </div>
 
             <div class="feature-card">
                 <i class="fa-solid fa-id-badge feature-icon"></i>
-                <div class="feature-title">Step 5: フロントエンド用認証基盤（Cognito）の構築</div>
+                <div class="feature-title">Step 3: フロントエンド用認証基盤（Cognito）の構築</div>
                 <div class="feature-desc">
-                    <p><strong>目的:</strong> Role C（ブラウザ）がIoT Coreへ安全にWebSocket接続できるようにする。</p>
+                    <p><strong>目的:</strong> プライバシー情報を保護し、認証済みユーザーのみがシステムにアクセスできるようにする。</p>
                     <ol>
-                        <li>Amazon Cognitoで「IDプール（Identity Pool）」を作成し、未認証（Unauthenticated）ゲストアクセスを許可する。</li>
-                        <li>未認証ロールのIAMポリシーに <code>iot:Connect</code>, <code>iot:Subscribe</code>, <code>iot:Receive</code> 権限を付与する。</li>
+                        <li>Amazon Cognitoで「ユーザープール（User Pool）」を作成し、保護者用のログインアカウントを発行する。</li>
+                        <li>「IDプール（Identity Pool）」を作成し、ユーザープールを認証プロバイダーとして紐付ける。</li>
+                        <li>認証済みロールのIAMポリシーに <code>iot:Connect</code>, <code>iot:Subscribe</code>, <code>iot:Receive</code> 権限を付与する（未認証アクセスは無効化）。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        ブラウザからはデバイス証明書（mTLS）が利用できないため、Cognitoを利用した一時クレデンシャルによるSigV4署名が必須となります。IAMポリシーのResource句は <code>*</code> にせず、Role CがSubscribeする特定のトピック（Role Aが送信するトピック）のみに制限し、最小権限の原則を徹底してください。
+                        未認証アクセスを許可すると、URLを知る第三者が子供の監視データを覗き見できる重大なインシデントに繋がります。必ずユーザープールによるログインを必須とし、IAMポリシーのResource句はRole CがSubscribeする特定のトピックのみに制限して最小権限の原則を徹底してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-server feature-icon"></i>
+                <div class="feature-title">Step 4: セキュアな履歴データ取得用APIの構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role C（フロントエンド）が過去のハザードデータを安全に取得できるようにする。</p>
+                    <ol>
+                        <li>API Gatewayを作成し、Cognito User Pool AuthorizerをアタッチしてAPIを保護する。</li>
+                        <li>Lambda関数をトリガーし、DynamoDBのGSIに対して <code>Query</code> を実行してJSONを返す。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        APIをパブリックに公開すると、DDoS攻撃や不正アクセスによりLambdaの実行回数とDynamoDBのRCUが枯渇します。必ずCognito Authorizerを用いて、リクエストヘッダのJWTトークンを検証する認可プロセスを挟んでください。
                     </p>
                 </div>
             </div>
 
             <div class="feature-card">
                 <i class="fa-solid fa-cloud-arrow-up feature-icon"></i>
-                <div class="feature-title">Step 6: フロントエンド用ホスティング環境の構築</div>
+                <div class="feature-title">Step 5: フロントエンド用ホスティング環境の構築</div>
                 <div class="feature-desc">
                     <p><strong>目的:</strong> Role Cが開発した専用サイトをインターネット上に公開する。</p>
                     <ol>
@@ -126,7 +111,7 @@
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        S3バケットを直接パブリック公開すると、意図しないアクセスによるデータ転送料金が高騰するリスクがあります。必ずCloudFrontを前段に配置し、S3バケットポリシーでCloudFrontからのアクセスのみを許可するセキュアな構成にしてください。
+                        S3バケットを直接パブリック公開すると、意図しないアクセスによるデータ転送料金が高騰するリスクがあります。必ずCloudFrontを前段に配置し、S3バケットポリシーでCloudFrontからのアクセスのみを許可するセキュアな構成にしてください。また、SPAルーティングのためにCloudFrontで404エラー時に <code>/index.html</code> (200 OK) を返す設定を行ってください。
                     </p>
                 </div>
             </div>
@@ -137,8 +122,8 @@
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
                     <ul style="margin-top: 10px;">
-                        <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書、およびParameter Storeに保存したWebex Botのパラメータ名を提供し、EC2にIAMロールをアタッチします。</li>
-                        <li><strong>Role Cへ:</strong> 履歴取得APIのURL（CORS許可済み）、WebSocket接続用の<strong>「IoT Coreエンドポイント」「Cognito Identity Pool ID」「AWSリージョン」</strong>、およびデプロイ先の<strong>S3バケット名</strong>を提供します。</li>
+                        <li><strong>Role Aへ:</strong> AWS IoT Coreのエンドポイント、デバイス証明書の提供。※IAMロールの作成はRole A自身が行います。</li>
+                        <li><strong>Role Cへ:</strong> 履歴取得APIのURL（CORS許可済み）、WebSocket接続および認証用の<strong>「IoT Coreエンドポイント」「Cognito User Pool ID」「Cognito Client ID」「Identity Pool ID」「AWSリージョン」</strong>、およびデプロイ先の<strong>S3バケット名</strong>を提供します。</li>
                     </ul>
                 </div>
             </div>

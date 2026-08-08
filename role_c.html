@@ -29,7 +29,7 @@
                     <ul>
                         <li><strong>環境:</strong> React, Three.js (@react-three/fiber, @react-three/drei)</li>
                         <li><strong>アセット:</strong> Polycam等でスキャンした部屋の3Dモデル（.gltf / .glb形式）</li>
-                        <li><strong>連携情報:</strong> Role AからのMQTTトピック名、Role Bからの履歴取得APIのURL。およびWebSocket接続用の<strong>「IoT Coreエンドポイント」「Cognito Identity Pool ID」「AWSリージョン」</strong>。</li>
+                        <li><strong>連携情報:</strong> Role AからのMQTTトピック名とカメラキャリブレーション行列。Role Bからの履歴取得API URL、および<strong>「Cognito User Pool ID / Client ID」「Identity Pool ID」「IoT Coreエンドポイント」</strong>。</li>
                     </ul>
                 </div>
             </div>
@@ -38,8 +38,24 @@
         <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">2. 実装手順と技術的課題の根本解決アプローチ</h3>
         <div class="steps-grid">
             <div class="feature-card">
+                <i class="fa-solid fa-lock feature-icon"></i>
+                <div class="feature-title">Step 1: Cognito認証（ログインUI）の実装</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> プライバシー情報を保護し、認可された保護者のみがダッシュボードを閲覧できるようにする。</p>
+                    <ol>
+                        <li>AWS Amplify (Authモジュール) 等を用いて、Cognito User Poolによるログイン画面を実装する。</li>
+                        <li>ログイン成功後、取得したJWTトークンを用いてIdentity Poolから一時クレデンシャルを取得する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        認証状態の管理が不適切だと、ページリロード時に毎回ログアウトされてしまいます。必ずセッションの永続化（LocalStorage等へのトークン保存）を行い、API呼び出し時には <code>Authorization</code> ヘッダにJWTトークンを付与するインターセプターを実装してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
                 <i class="fa-solid fa-cube feature-icon"></i>
-                <div class="feature-title">Step 1: React + Three.jsによる3D空間の構築</div>
+                <div class="feature-title">Step 2: React + Three.jsによる3D空間の構築</div>
                 <div class="feature-desc">
                     <p><strong>目的:</strong> Polycamの3Dモデルをブラウザ上でレンダリングする。</p>
                     <ol>
@@ -54,12 +70,11 @@
 
             <div class="feature-card">
                 <i class="fa-solid fa-wifi feature-icon"></i>
-                <div class="feature-title">Step 2: MQTT over WebSocketの受信</div>
+                <div class="feature-title">Step 3: MQTT over WebSocketの受信</div>
                 <div class="feature-desc">
                     <p><strong>目的:</strong> 危険検知アラートをブラウザにリアルタイムでポップアップさせる。</p>
                     <ol>
-                        <li>AWS SDKを用いてCognito Identity Poolから一時クレデンシャルを取得する。</li>
-                        <li>取得したクレデンシャルでSigV4署名付きURLを生成し、<code>aws-iot-device-sdk-v2</code> (ブラウザ版) または <code>mqtt.js</code> でIoT CoreにWebSocket接続してトピックをSubscribeする。</li>
+                        <li>Step 1で取得した一時クレデンシャルでSigV4署名付きURLを生成し、<code>aws-iot-device-sdk-v2</code> (ブラウザ版) または <code>mqtt.js</code> でIoT CoreにWebSocket接続してトピックをSubscribeする。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
@@ -70,26 +85,27 @@
 
             <div class="feature-card">
                 <i class="fa-solid fa-crosshairs feature-icon"></i>
-                <div class="feature-title">Step 3: リアルタイムアラートの3Dマッピング</div>
+                <div class="feature-title">Step 4: リアルタイムアラートの3Dマッピング</div>
                 <div class="feature-desc">
                     <p><strong>目的:</strong> 受信したアラートの座標を3D空間上に視覚化する。</p>
                     <ol>
-                        <li>MQTTで受信した2D座標（カメラ画像上のX, Y）を、3D空間の座標（X, Y, Z）に変換し、該当位置に警告マーカーを描画する。</li>
+                        <li>Role Aから提供されたカメラの内部パラメータ（歪み係数等）と外部パラメータ（3D空間内での位置・姿勢行列）を元に、仮想カメラをThree.jsのシーン内に配置する。</li>
+                        <li>MQTTで受信した2D座標を、逆投影変換またはRaycasterを用いて3D空間の床面座標（X, Y, Z）に変換し、マーカーを描画する。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        2Dから3Dへの変換はカメラの設置角度や画角に依存するため単純な計算ではずれます。Three.jsの <code>Raycaster</code> を用いて、仮想カメラから3Dモデルの床面に向けてレイを飛ばし、交差判定（Intersection）によって正確な3D座標を算出するロジックを実装してください。
+                        2Dから3Dへの変換はカメラの設置角度や画角に依存するため単純な計算ではずれます。必ずRole Aから正確なキャリブレーション行列を受け取り、数学的に正しい射影変換を行うか、Three.jsの <code>Raycaster</code> を用いて仮想カメラから3Dモデルのメッシュに向けてレイを飛ばし、交差判定（Intersection）によって座標を算出してください。
                     </p>
                 </div>
             </div>
 
             <div class="feature-card">
                 <i class="fa-solid fa-fire feature-icon"></i>
-                <div class="feature-title">Step 4: 履歴データの可視化（ヒートマップ）</div>
+                <div class="feature-title">Step 5: 履歴データの可視化（ヒートマップ）</div>
                 <div class="feature-desc">
                     <p><strong>目的:</strong> 過去の危険エリアを3D空間上に重畳表示する。</p>
                     <ol>
-                        <li>Role BのAPIから履歴データを取得し、座標データ群を元にヒートマップやパーティクルを生成する。</li>
+                        <li>Role BのAPI（JWTトークン付き）から履歴データを取得し、座標データ群を元にヒートマップやパーティクルを生成する。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
@@ -100,7 +116,7 @@
 
             <div class="feature-card">
                 <i class="fa-solid fa-rocket feature-icon"></i>
-                <div class="feature-title">Step 5: プロダクションビルドとデプロイ</div>
+                <div class="feature-title">Step 6: プロダクションビルドとデプロイ</div>
                 <div class="feature-desc">
                     <p><strong>目的:</strong> 完成したWebアプリケーションをAWS環境に公開する。</p>
                     <ol>
@@ -109,7 +125,7 @@
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        React Router等でクライアントサイドルーティングを行っている場合、S3/CloudFront上で直接URLアクセスすると404エラーになります。CloudFrontのエラーページ設定で、404エラー時に <code>/index.html</code> を返しステータスコードを200にするよう、Role Bに設定を依頼してください。
+                        React Router等でクライアントサイドルーティングを行っている場合、S3/CloudFront上で直接URLアクセスすると404エラーになります。CloudFrontのエラーページ設定で、404エラー時に <code>/index.html</code> を返しステータスコードを200にするよう、Role Bに設定が完了しているか確認してください。
                     </p>
                 </div>
             </div>
@@ -120,7 +136,7 @@
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
                     <ul style="margin-top: 10px;">
-                        <li><strong>Role Aへ:</strong> 3Dマッピングの計算に必要な、カメラの実世界での設置位置（高さ、角度）と画角（FOV）のパラメータを要求します。</li>
+                        <li><strong>Role Aへ:</strong> 3Dマッピングの計算に必要な、カメラの実世界での設置位置（高さ、角度）、画角（FOV）、およびキャリブレーション行列のパラメータを要求します。</li>
                         <li><strong>Role Bへ:</strong> 履歴取得APIのレスポンスフォーマットのすり合わせ、CORSエラー発生時の対応、およびCloudFrontのルーティング（404エラー時のindex.htmlフォールバック）設定を依頼します。</li>
                     </ul>
                 </div>
