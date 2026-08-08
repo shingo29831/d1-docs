@@ -43,12 +43,14 @@
                 <div class="feature-desc">
                     <p><strong>目的:</strong> プライバシー情報を保護し、認可された保護者のみがダッシュボードを閲覧できるようにする。</p>
                     <ol>
-                        <li>AWS Amplify (Authモジュール) 等を用いて、Cognito User Poolによるログイン画面を実装する。</li>
-                        <li>ログイン成功後、取得したJWTトークンを用いてIdentity Poolから一時クレデンシャルを取得する。</li>
+                        <li><code>aws-amplify</code> のAuthモジュールを用いて、メールアドレスとパスワードによるログイン画面を実装する。</li>
+                        <li>ルーティングを保護し、未ログイン時はダッシュボードへのアクセスを弾きログイン画面へリダイレクトさせる。</li>
+                        <li>ログイン成功後、Amplifyの機能を用いてIdentity PoolからIoT Core接続用の一時クレデンシャルを取得する。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        認証状態の管理が不適切だと、ページリロード時に毎回ログアウトされてしまいます。必ずセッションの永続化（LocalStorage等へのトークン保存）を行い、API呼び出し時には <code>Authorization</code> ヘッダにJWTトークンを付与するインターセプターを実装してください。
+                        <strong>1. 開発工数の削減:</strong> ハッカソンのスピードを優先するため、「新規登録（サインアップ）」や「パスワードリセット」のUI実装は省略します。テスト用アカウントはRole BがAWSコンソールから手動で作成する運用としてください。<br>
+                        <strong>2. セッションの維持:</strong> ページリロード時に毎回ログアウトされないよう、Amplifyのデフォルト機能（LocalStorageへのトークン保存）を正しく活用し、API呼び出し時には <code>Authorization</code> ヘッダにJWTトークン（IDトークン）を付与してください。
                     </p>
                 </div>
             </div>
@@ -138,6 +140,21 @@
                     <ul style="margin-top: 10px;">
                         <li><strong>Role Aへ:</strong> 3Dマッピングの計算に必要な、カメラの実世界での設置位置（高さ、角度）、画角（FOV）、およびキャリブレーション行列のパラメータを要求します。</li>
                         <li><strong>Role Bへ:</strong> 履歴取得APIのレスポンスフォーマットのすり合わせ、CORSエラー発生時の対応、およびCloudFrontのルーティング（404エラー時のindex.htmlフォールバック）設定を依頼します。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">4. バックエンド未完了時の並行開発（モック）アプローチ</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <p>Role B（バックエンド）のインフラ構築が完了するのを待つ必要はありません。以下の方法でダミーデータ（モック）を活用し、フロントエンドのロジックとUIを先行して100%完成させることができます。</p>
+                    <ul style="margin-top: 10px;">
+                        <li><strong>ログイン画面のUI先行開発:</strong> Cognitoがなくても、Reactコンポーネントとしてログインフォーム（メアド・パスワード入力）を作成し、ボタン押下時に「ダミーのログイン成功状態」にしてダッシュボードへ遷移するルーティングを実装しておきます。</li>
+                        <li><strong>履歴APIのモック化:</strong> API GatewayのURLの代わりに、フロントエンドのコード内に直接ダミーのJSON配列（過去の危険検知座標 <code>[{x, y, z, timestamp}, ...]</code>）をハードコードし、3Dヒートマップの描画ロジックを完成させます。</li>
+                        <li><strong>MQTTアラートのモック化:</strong> IoT CoreからのWebSocket受信の代わりに、<code>setInterval</code> や画面上の「テスト発火ボタン」を用いて、数秒おきにランダムな座標のアラートイベントを発生させ、リアルタイムポップアップのUI挙動をテストします。</li>
+                        <li><strong>環境変数の分離:</strong> バックエンド完成時にコードを書き換えなくて済むよう、エンドポイントURLやCognitoのID群は <code>.env</code> ファイルから読み込む設計にしておきます。</li>
                     </ul>
                 </div>
             </div>
