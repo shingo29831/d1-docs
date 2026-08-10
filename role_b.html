@@ -19,7 +19,8 @@
 
     <div class="container">
         <p class="section-desc">
-            Role Bが担当する「バックエンド＆Webexモジュール」は、エッジから送られてくる大量のデータを安全かつ低コストで処理・保存し、外部サービス（Webex）との連携基盤を構築する役割を担います。<strong>「スロットリングによるデータ欠損」や「不適切なクエリによるクラウド破産（青天井課金）」、さらには「プライバシー情報の漏洩」</strong>を防ぐための堅牢な設計が求められます。
+            Role Bが担当する「バックエンド＆Webexモジュール」は、エッジから送られてくる大量のデータを安全かつ低コストで処理・保存し、外部サービス（Webex）との連携基盤を構築する役割を担います。<strong>「スロットリングによるデータ欠損」や「不適切なクエリによるクラウド破産（青天井課金）」、さらには「プライバシー情報の漏洩」</strong>を防ぐための堅牢な設計が求められます。<br>
+            また、他ロールの完成を待つ「ウォーターフォール的な待ち状態」を排除するため、モックAPIを用いた先行構築を積極的に行い、フロントエンドとの結合テストを最速で実施することが重要です。
         </p>
 
         <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">1. 開発に必要な環境・情報（準備物）</h3>
@@ -28,13 +29,156 @@
                 <div class="feature-desc">
                     <ul>
                         <li><strong>インフラ:</strong> AWSアカウント（IoT Core, DynamoDB, API Gateway, Lambda, Cognito, S3, CloudFront）、学校配布のIAMユーザー</li>
-                        <li><strong>連携情報 (Role Aから受領):</strong> MQTTで送信されるJSONデータのスキーマ</li>
+                        <li><strong>連携情報 (Role Aから受領):</strong> MQTTで送信されるJSONデータのスキーマ（※未定の場合はモックデータで先行開発）</li>
                     </ul>
                 </div>
             </div>
         </div>
 
         <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">2. 実装手順と技術的課題の根本解決アプローチ</h3>
+        <div class="steps-grid">
+            <div class="feature-card">
+                <i class="fa-solid fa-database feature-icon"></i>
+                <div class="feature-title">Step 1: IoT CoreルールとDynamoDB連携</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> エッジから送信されるMQTTメッセージを永続化する。</p>
+                    <ol>
+                        <li>IoT Coreのメッセージルーティングルールを作成し、特定トピックのデータをDynamoDBにINSERTするアクションを設定。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        プロビジョニングモード（1WCU固定）で運用するため、バーストトラフィック時に書き込みスロットリングが発生しデータが欠損するリスクがあります。必ずIoT Coreルールの「エラーアクション」として、<strong>CloudWatch Logsへエラー内容を出力する設定</strong>、または<strong>SQS（Dead Letter Queue）へメッセージを退避する設定</strong>を実装してください。これがないとデータ欠損時に原因追及が不可能になります。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-table feature-icon"></i>
+                <div class="feature-title">Step 2: DynamoDBのテーブル設計（GSIの活用）</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> 時系列データを効率的に保存し、かつ空間単位で一括検索できるようにする。</p>
+                    <ol>
+                        <li>基本テーブル: パーティションキー(PK)を <code>device_id</code>、ソートキー(SK)を <code>timestamp</code> に設定。</li>
+                        <li>グローバルセカンダリインデックス(GSI): PKを <code>room_id</code>、SKを <code>timestamp</code> に設定。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        複数カメラがある部屋全体のハザードデータを取得する際、<code>device_id</code> がPKだと複数回のクエリや全件スキャンが必要になります。必ず <code>room_id</code> をPKとするGSIを設計し、1回のQuery操作で特定期間・特定空間のデータを取得できるようにしてRCU消費を抑えてください。また、TTL（Time to Live）を有効にし、古いデータを自動削除すること。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-id-badge feature-icon"></i>
+                <div class="feature-title">Step 3: フロントエンド用認証基盤（Cognito）の構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> プライバシー情報を保護し、認証済みユーザーのみがシステムにアクセスできるようにする。</p>
+                    <ol>
+                        <li><strong>API認証用:</strong> Amazon Cognitoで「ユーザープール」を作成し、保護者用のアカウントを発行する。サインイン識別子には<strong>「メールアドレス」</strong>を選択する。</li>
+                        <li><strong>IoT Core接続用:</strong> 「IDプール」を作成し、認証プロバイダーとして<strong>「Amazon Cognito」</strong>を選択する。そこに上記で作成した「ユーザープールID」と「アプリクライアントID」を設定して紐付ける。</li>
+                        <li>IDプールの「認証済みロール」のIAMポリシーに <code>iot:Connect</code>, <code>iot:Subscribe</code>, <code>iot:Receive</code> 権限を付与する。</li>
+                        <li><strong>【先行タスク】</strong>AWSコンソールからCognito User Poolにテストユーザー（メールアドレス）を手動作成し、パスワードを設定してRole Cへ共有する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        未認証アクセスを許可すると、URLを知る第三者が子供の監視データを覗き見できる重大なインシデントに繋がります。必ずユーザープールによるログインを必須とし、IDプールに紐づくIAMポリシーのResource句は、Role CがSubscribeする特定のMQTTトピックのみに制限して最小権限の原則を徹底してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-server feature-icon"></i>
+                <div class="feature-title">Step 4: API Gateway + Lambdaによる履歴取得APIの構築（モック先行）</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role Cが過去のハザードデータを安全に取得できるようにする。Role AのJSONスキーマ確定を待たずに、インフラと認可の結合テストを先行させる。</p>
+                    <ol>
+                        <li>API Gateway（HTTP API または REST API）を作成し、<strong>Cognito User Pool Authorizer</strong>をアタッチしてエンドポイントを保護する。</li>
+                        <li><strong>【先行タスク】</strong>Role Aからのスキーマを待つ間、以下の「モックデータを返すLambda関数」をデプロイし、API Gatewayに統合する。これによりRole CはCORSやCognito認可の結合テストを即座に開始できる。
+<pre style="background: #2d2d2d; color: #ccc; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; margin-top: 10px;"><code>export const handler = async (event) => {
+  return {
+    statusCode: 200,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+      'Access-Control-Allow-Methods': 'OPTIONS,GET'
+    },
+    body: JSON.stringify([
+      { device_id: 'camera_01', timestamp: Date.now() - 3600000, x: 1.5, y: 0, z: 2.0, type: 'hazard' },
+      { device_id: 'camera_01', timestamp: Date.now() - 1800000, x: -1.0, y: 0, z: 1.5, type: 'hazard' }
+    ])
+  };
+};</code></pre>
+                        </li>
+                        <li>スキーマ確定後、DynamoDBのGSIに対して <code>Query</code> を実行する本番ロジックへLambdaを書き換える。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        <strong>1. CORSエラーの確実な防止:</strong> API Gateway側でのCORS設定だけでなく、Lambda関数からの戻り値（レスポンスヘッダー）にも必ず <code>Access-Control-Allow-Origin</code> などのCORSヘッダーを含めてください。<br>
+                        <strong>2. 不正クエリによるDB負荷の防止:</strong> フロントエンドから渡されるクエリパラメータをLambda内で厳格に型検証し、不正な値の場合は <code>400 Bad Request</code> を返すフェイルセーフを実装してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-cloud-arrow-up feature-icon"></i>
+                <div class="feature-title">Step 5: フロントエンド用ホスティング環境の構築</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role Cが開発した専用サイトをインターネット上に公開する。</p>
+                    <ol>
+                        <li>Amazon S3バケットを作成し、静的ウェブサイトホスティングを有効化する。</li>
+                        <li>Amazon CloudFrontディストリビューションを作成し、S3をオリジンとして設定する（OACを利用してS3を非公開化）。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        <strong>1. セキュリティ:</strong> S3バケットを直接パブリック公開せず、必ずCloudFrontを前段に配置し、S3バケットポリシーでCloudFrontからのアクセスのみを許可するセキュアな構成にしてください。<br>
+                        <strong>2. SPAルーティング設定（必須）:</strong> React等のSPAでは、画面遷移後にリロードするとS3のKey NotFoundエラーになります。必ずCloudFrontの「エラーページ」設定で、HTTPステータスコード <code>404</code> および <code>403</code> に対して、レスポンスページパスを <code>/index.html</code> にし、HTTPレスポンスコードを <code>200</code> に設定してください。
+                    </p>
+                </div>
+            </div>
+
+            <div class="feature-card">
+                <i class="fa-solid fa-robot feature-icon"></i>
+                <div class="feature-title">Step 6: Webex Botのプロビジョニングと通信テスト</div>
+                <div class="feature-desc">
+                    <p><strong>目的:</strong> Role Aが画像送信ロジックを実装するために必要なWebexの認証情報と送信先を準備する。</p>
+                    <ol>
+                        <li>Webex Developer PortalでBotを作成し、<strong>Bot Access Token</strong> を取得する。</li>
+                        <li>通知用のWebex Space (Room) を作成し、Botを招待して <strong>Room ID</strong> を取得する。</li>
+                        <li>Postmanやcurl等を使用し、取得したTokenとRoom IDで実際にWebex Messaging APIへテストメッセージをPOSTし、正常に送信されることを確認する。</li>
+                    </ol>
+                    <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
+                        <strong>【重要】技術的課題と根本解決:</strong><br>
+                        Role AがAI推論と画像エンコードの実装に集中できるよう、インフラ・API連携担当であるRole Bが事前にAPIの疎通確認を済ませておくことが不可欠です。未検証のTokenを渡すと、Role A側でエラーが出た際に「コードのバグ」か「Token/権限の不備」かの切り分けに無駄な時間を費やすことになります。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <ul style="margin-top: 10px;">
+                        <li><strong>Role Aへ共有:</strong> AWS IoT Coreのエンドポイント、デバイス証明書。およびStep 6で検証済みの <strong>Webex Bot Access Token</strong> と <strong>Room ID</strong>。</li>
+                        <li><strong>Role Cへ共有（環境変数セット）:</strong> フロントエンドの結合テストをブロックしないよう、以下の情報を一式提供します。
+                            <ul>
+                                <li>Cognito User Pool ID</li>
+                                <li>Cognito Client ID</li>
+                                <li>Cognito Identity Pool ID</li>
+                                <li>AWS IoT Core エンドポイントURL</li>
+                                <li>AWSリージョン名</li>
+                                <li>履歴取得API（モック）のURL</li>
+                                <li>テストユーザーのログインIDとパスワード</li>
+                                <li>デプロイ先のS3バケット名</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">2. 実装手順と技術的課題の根本解決アプローチ</h3>
         <div class="steps-grid">
             <div class="feature-card">
                 <i class="fa-solid fa-database feature-icon"></i>
