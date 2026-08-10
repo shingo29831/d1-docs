@@ -93,7 +93,7 @@
                     <p><strong>目的:</strong> Role Cが過去のハザードデータを安全に取得できるようにする。Role AのJSONスキーマ確定を待たずに、インフラと認可の結合テストを先行させる。</p>
                     <ol>
                         <li>API Gateway（HTTP API または REST API）を作成し、<strong>Cognito User Pool Authorizer</strong>をアタッチしてエンドポイントを保護する。</li>
-                        <li><strong>【先行タスク】</strong>Role Aからのスキーマを待つ間、以下の「モックデータを返すLambda関数」をデプロイし、API Gatewayに統合する。これによりRole CはCORSやCognito認可の結合テストを即座に開始できる。
+                        <li><strong>【先行タスク】</strong>以下の「モックデータを返すLambda関数」をデプロイし、API Gatewayに統合する。これによりRole CはCORSやCognito認可の結合テストを即座に開始できる。
 <pre style="background: #2d2d2d; color: #ccc; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; margin-top: 10px;"><code>export const handler = async (event) => {
   return {
     statusCode: 200,
@@ -103,13 +103,13 @@
       'Access-Control-Allow-Methods': 'OPTIONS,GET'
     },
     body: JSON.stringify([
-      { device_id: 'camera_01', timestamp: Date.now() - 3600000, x: 1.5, y: 0, z: 2.0, type: 'hazard' },
-      { device_id: 'camera_01', timestamp: Date.now() - 1800000, x: -1.0, y: 0, z: 1.5, type: 'hazard' }
+      { device_id: 'mv_camera_01', room_id: 'living_room', timestamp: Date.now() - 3600000, event_type: 'ai_hazard', details: { hazard_type: 'fall', x: 640, y: 480, confidence: 0.85 } },
+      { device_id: 'mt20_door_01', room_id: 'living_room', timestamp: Date.now() - 1800000, event_type: 'sensor_alert', details: { sensor_type: 'door', status: 'open', battery_level: 95 } }
     ])
   };
 };</code></pre>
                         </li>
-                        <li>スキーマ確定後、DynamoDBのGSIに対して <code>Query</code> を実行する本番ロジックへLambdaを書き換える。</li>
+                        <li>結合テスト完了後、DynamoDBのGSIに対して <code>Query</code> を実行する本番ロジックへLambdaを書き換える。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
@@ -154,10 +154,26 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. システム共通JSONスキーマと連携ポイント</h3>
         <div class="features-grid">
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
+                    <p><strong>【重要】AWS IoT CoreおよびDynamoDBで扱うJSONスキーマが以下に確定しました。</strong> これを前提に、DynamoDBのテーブル設計（PK: <code>device_id</code>, SK: <code>timestamp</code>, GSI-PK: <code>room_id</code>, GSI-SK: <code>timestamp</code>）と、Lambda関数の本番ロジック実装を進めてください。</p>
+                    <pre style="background: #2d2d2d; color: #ccc; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; margin-top: 10px;"><code>// パターン1: AI推論アラート
+{
+  "device_id": "mv_camera_01", "room_id": "living_room", "timestamp": 1723307400000, "event_type": "ai_hazard",
+  "details": { "hazard_type": "fall", "x": 640, "y": 480, "confidence": 0.85 }
+}
+// パターン2: Merakiセンサーアラート
+{
+  "device_id": "mt20_door_01", "room_id": "living_room", "timestamp": 1723307405000, "event_type": "sensor_alert",
+  "details": { "sensor_type": "door", "status": "open", "battery_level": 95 }
+}
+// パターン3: 複合アラート
+{
+  "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307410000, "event_type": "complex_alert",
+  "details": { "alert_type": "night_wandering", "trigger_device": "mt20_door_01", "lux": 5 }
+}</code></pre>
                     <ul style="margin-top: 10px;">
                         <li><strong>Role Aへ共有:</strong> AWS IoT Coreのエンドポイント、デバイス証明書。およびStep 6で検証済みの <strong>Webex Bot Access Token</strong> と <strong>Room ID</strong>。</li>
                         <li><strong>Role Cへ共有（環境変数セット）:</strong> フロントエンドの結合テストをブロックしないよう、以下の情報を一式提供します。
@@ -167,7 +183,7 @@
                                 <li>Cognito Identity Pool ID</li>
                                 <li>AWS IoT Core エンドポイントURL</li>
                                 <li>AWSリージョン名</li>
-                                <li>履歴取得API（モック）のURL</li>
+                                <li>履歴取得APIのURL（モックから本番へ切り替え）</li>
                                 <li>テストユーザーのログインIDとパスワード</li>
                                 <li>デプロイ先のS3バケット名</li>
                             </ul>
