@@ -134,13 +134,29 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. システム共通JSONスキーマと連携ポイント</h3>
         <div class="features-grid">
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
+                    <p><strong>【重要】APIおよびWebSocketで受信するJSONスキーマが以下に確定しました。</strong> <code>event_type</code> の値を見てポップアップUIを出し分け、<code>ai_hazard</code> の場合は <code>details.x</code> と <code>details.y</code> を用いて3D空間への座標変換を行ってください。</p>
+                    <pre style="background: #2d2d2d; color: #ccc; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; margin-top: 10px;"><code>// パターン1: AI推論アラート
+{
+  "device_id": "mv_camera_01", "room_id": "living_room", "timestamp": 1723307400000, "event_type": "ai_hazard",
+  "details": { "hazard_type": "fall", "x": 640, "y": 480, "confidence": 0.85 }
+}
+// パターン2: Merakiセンサーアラート
+{
+  "device_id": "mt20_door_01", "room_id": "living_room", "timestamp": 1723307405000, "event_type": "sensor_alert",
+  "details": { "sensor_type": "door", "status": "open", "battery_level": 95 }
+}
+// パターン3: 複合アラート
+{
+  "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307410000, "event_type": "complex_alert",
+  "details": { "alert_type": "night_wandering", "trigger_device": "mt20_door_01", "lux": 5 }
+}</code></pre>
                     <ul style="margin-top: 10px;">
                         <li><strong>Role Aへ:</strong> 3Dマッピングの計算に必要な、カメラの実世界での設置位置（高さ、角度）、画角（FOV）、およびキャリブレーション行列のパラメータを要求します。</li>
-                        <li><strong>Role Bへ:</strong> 履歴取得APIのレスポンスフォーマットのすり合わせ、CORSエラー発生時の対応、およびCloudFrontのルーティング（404エラー時のindex.htmlフォールバック）設定を依頼します。</li>
+                        <li><strong>Role Bへ:</strong> CORSエラー発生時の対応、およびCloudFrontのルーティング（404エラー時のindex.htmlフォールバック）設定を依頼します。</li>
                     </ul>
                 </div>
             </div>
