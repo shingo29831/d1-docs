@@ -24,9 +24,10 @@
             <h3><i class="fa-solid fa-list"></i> 目次</h3>
             <ul>
                 <li><a href="#architecture">1. システムアーキテクチャ (Webex & Cost-Optimized)</a></li>
-                <li><a href="#features">2. 主要機能要件</a></li>
-                <li><a href="#tech-stack">3. 技術スタック</a></li>
-                <li><a href="#team-roles">4. チーム開発体制と役割分担 (計5名)</a></li>
+                <li><a href="#json-schema">2. システム共通JSONスキーマ (データ連携仕様)</a></li>
+                <li><a href="#features">3. 主要機能要件</a></li>
+                <li><a href="#tech-stack">4. 技術スタック</a></li>
+                <li><a href="#team-roles">5. チーム開発体制と役割分担 (計5名)</a></li>
             </ul>
         </nav>
 
@@ -94,7 +95,55 @@
             </p>
         </div>
 
-        <h2 id="features" class="section-title">2. 主要機能要件</h2>
+        <h2 id="json-schema" class="section-title">2. システム共通JSONスキーマ (データ連携仕様)</h2>
+        <div class="features-grid">
+            <div class="feature-card" style="grid-column: 1 / -1;">
+                <div class="feature-desc">
+                    <p>エッジ（Role A）からクラウド（AWS IoT Core / DynamoDB）を経由し、フロントエンド（Role C）まで一貫して使用されるJSONスキーマです。Merakiの生データやAIの生配列は、必ずエッジ側でこの共通フォーマットに整形（パース）してから送信されます。</p>
+                    <pre style="background: #2d2d2d; color: #ccc; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; margin-top: 10px; font-family: monospace;"><code>// パターン1: AI推論アラート (YOLOv8 Pose等)
+{
+  "device_id": "mv_camera_01",
+  "room_id": "living_room",
+  "timestamp": 1723307400000,
+  "event_type": "ai_hazard",
+  "details": {
+    "hazard_type": "fall",       // "fall"(転倒), "prone"(うつ伏せ), "intrusion"(侵入)
+    "x": 640,                    // 画像上のX座標（ピクセル）
+    "y": 480,                    // 画像上のY座標（ピクセル）
+    "confidence": 0.85           // AIの確信度
+  }
+}
+
+// パターン2: Merakiセンサーアラート (MT10 / MT20)
+{
+  "device_id": "mt20_door_01",
+  "room_id": "living_room",
+  "timestamp": 1723307405000,
+  "event_type": "sensor_alert",
+  "details": {
+    "sensor_type": "door",       // "door"(MT20), "temperature"(MT10)
+    "status": "open",            // "open", "closed" または 温度の数値
+    "battery_level": 95
+  }
+}
+
+// パターン3: 複合アラート (夜間徘徊など)
+{
+  "device_id": "system_logic_01",
+  "room_id": "living_room",
+  "timestamp": 1723307410000,
+  "event_type": "complex_alert",
+  "details": {
+    "alert_type": "night_wandering",
+    "trigger_device": "mt20_door_01",
+    "lux": 5                     // 検知時のMVカメラ照度
+  }
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <h2 id="features" class="section-title">3. 主要機能要件</h2>
         <div class="features-grid">
             
             <div class="feature-card alert">
@@ -182,7 +231,7 @@
 
         </div>
 
-        <h2 id="tech-stack" class="section-title">3. 技術スタック</h2>
+        <h2 id="tech-stack" class="section-title">4. 技術スタック</h2>
         <div class="tech-stack-container">
             <div class="tech-category">
                 <h3>Hardware / Edge</h3>
@@ -212,7 +261,7 @@
             </div>
         </div>
 
-        <h2 id="team-roles" class="section-title">4. チーム開発体制と役割分担 (計5名)</h2>
+        <h2 id="team-roles" class="section-title">5. チーム開発体制と役割分担 (計5名)</h2>
         <p class="section-desc">依存関係を最小限に抑えた疎結合な3つのコアロールと、全体を横断的に支援するサポートロールに分割し、開発を効率的に進めます。<br><strong>【開発フェーズと権限の前提】</strong><br>・<strong>権限:</strong> 学校から配布されたIAMユーザーを使用します（IAMロール作成権限なし）。EC2等の認証は <code>aws configure</code> でアクセスキーを設定します。<br>・<strong>スコープ:</strong> 開発パンクを防ぐため、初期は「1家族（単一テナント）向け」として構築し、後日DB設計変更とLambda認可制御を追加して「複数家族（マルチテナント）対応」へ拡張する段階的アプローチをとります。</p>
         
         <div class="roles-grid">
