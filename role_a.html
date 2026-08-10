@@ -140,13 +140,27 @@
             </div>
         </div>
 
-        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. 他ロールとの連携ポイント（アウトプット）</h3>
+        <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; border-left: 4px solid #00bceb; padding-left: 10px;">3. システム共通JSONスキーマと連携ポイント</h3>
         <div class="features-grid">
             <div class="feature-card" style="grid-column: 1 / -1;">
                 <div class="feature-desc">
-                    <p>Role Aの実装が完了したら、以下の情報を他ロールへ共有します。</p>
+                    <p><strong>【重要】AWS IoT Coreへ送信するJSONスキーマが以下に確定しました。</strong> Merakiの生データやYOLOの配列をそのまま送るのではなく、必ずEC2上で以下の形式に整形（パース）してからPublishしてください。</p>
+                    <pre style="background: #2d2d2d; color: #ccc; padding: 10px; border-radius: 5px; overflow-x: auto; font-size: 0.9em; margin-top: 10px;"><code>// パターン1: AI推論アラート
+{
+  "device_id": "mv_camera_01", "room_id": "living_room", "timestamp": 1723307400000, "event_type": "ai_hazard",
+  "details": { "hazard_type": "fall", "x": 640, "y": 480, "confidence": 0.85 }
+}
+// パターン2: Merakiセンサーアラート
+{
+  "device_id": "mt20_door_01", "room_id": "living_room", "timestamp": 1723307405000, "event_type": "sensor_alert",
+  "details": { "sensor_type": "door", "status": "open", "battery_level": 95 }
+}
+// パターン3: 複合アラート
+{
+  "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307410000, "event_type": "complex_alert",
+  "details": { "alert_type": "night_wandering", "trigger_device": "mt20_door_01", "lux": 5 }
+}</code></pre>
                     <ul style="margin-top: 10px;">
-                        <li><strong style="color: #ff4a4a;">【最優先】Role Bへ:</strong> MQTTで送信するJSONデータのフォーマット（スキーマ）。Role BのDynamoDB構築タスクがブロックされているため、<strong>ダミーデータでも構わないので至急共有</strong>してください。</li>
                         <li><strong>Role Cへ:</strong> 送信するMQTTの「トピック名」。</li>
                         <li><strong>Role Cへ（重要）:</strong> カメラの内部パラメータ（カメラ行列・歪み係数）および外部パラメータ（3D空間内でのカメラの座標と回転行列）。これによりRole Cは2D座標を正確に3D空間へマッピングできます。</li>
                     </ul>
