@@ -139,6 +139,13 @@
     "lux": 5                     // 検知時のMVカメラ照度
   }
 }</code></pre>
+                    <h4 style="margin-top: 20px; margin-bottom: 10px; color: #00bceb; font-size: 1.1em;"><i class="fa-solid fa-database"></i> DynamoDB テーブル設計 (HazardEvents)</h4>
+                    <p style="margin-bottom: 10px;">上記のJSONデータは、AWS IoT Coreのルールエンジンを経由して以下の設計でDynamoDBに永続化されます。</p>
+                    <ul style="list-style-type: disc; margin-left: 20px; margin-bottom: 10px;">
+                        <li><strong>基本テーブル:</strong> PK: <code>device_id</code> (String), SK: <code>timestamp</code> (Number)</li>
+                        <li><strong>GSI (RoomEventsIndex):</strong> PK: <code>room_id</code> (String), SK: <code>timestamp</code> (Number) - 部屋単位での高速な履歴取得用</li>
+                        <li><strong>TTL (自動削除):</strong> <code>expiration_time</code> (Number) - IoT CoreのSQLで現在時刻+保持期間（例: 30日）を動的に付与し、古いデータを自動削除してストレージコストを最適化。</li>
+                    </ul>
                 </div>
             </div>
         </div>
