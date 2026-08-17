@@ -130,7 +130,7 @@
                     <ol>
                         <li><code>boto3</code> を用いて、Role Bが構築したDynamoDBから過去の滞在座標と時間帯データを定期的に（例: 1日1回）取得する。</li>
                         <li><code>scikit-learn</code> の <code>IsolationForest</code> を用いてデータをクラスタリングし、異常スコアを算出する。</li>
-                        <li>算出されたリスクエリアの座標データを、IoT Core経由またはDynamoDBへ書き戻し、Role Cのダッシュボードにサジェストする。</li>
+                        <li>算出されたリスクエリアの座標データをDynamoDBへ書き戻し（保存し）、Role Bの履歴取得API経由でRole Cのダッシュボードにサジェストする（WebSocketによるリアルタイム通知は不要）。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
@@ -159,6 +159,11 @@
 {
   "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307410000, "event_type": "complex_alert",
   "details": { "alert_type": "night_wandering", "trigger_device": "mt20_door_01", "lux": 5 }
+}
+// パターン4: 行動パターン解析結果
+{
+  "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307420000, "event_type": "risk_suggestion",
+  "details": { "risk_level": "high", "suggested_area": { "x": 100, "y": 200, "radius": 50 }, "reason": "unusual_access_time" }
 }</code></pre>
                     <ul style="margin-top: 10px;">
                         <li><strong>Role Cへ:</strong> 送信するMQTTの「トピック名」。</li>

@@ -138,6 +138,19 @@
     "trigger_device": "mt20_door_01",
     "lux": 5                     // 検知時のMVカメラ照度
   }
+}
+
+// パターン4: 行動パターン解析結果 (バッチ処理によるサジェスト)
+{
+  "device_id": "system_logic_01",
+  "room_id": "living_room",
+  "timestamp": 1723307420000,
+  "event_type": "risk_suggestion",
+  "details": {
+    "risk_level": "high",
+    "suggested_area": { "x": 100, "y": 200, "radius": 50 },
+    "reason": "unusual_access_time"
+  }
 }</code></pre>
                     <h4 style="margin-top: 20px; margin-bottom: 10px; color: #00bceb; font-size: 1.1em;"><i class="fa-solid fa-database"></i> DynamoDB テーブル設計 (HazardEvents)</h4>
                     <p style="margin-bottom: 10px;">上記のJSONデータは、AWS IoT Coreのルールエンジンを経由して以下の設計でDynamoDBに永続化されます。</p>

@@ -153,6 +153,11 @@
 {
   "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307410000, "event_type": "complex_alert",
   "details": { "alert_type": "night_wandering", "trigger_device": "mt20_door_01", "lux": 5 }
+}
+// パターン4: 行動パターン解析結果
+{
+  "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307420000, "event_type": "risk_suggestion",
+  "details": { "risk_level": "high", "suggested_area": { "x": 100, "y": 200, "radius": 50 }, "reason": "unusual_access_time" }
 }</code></pre>
                     <ul style="margin-top: 10px;">
                         <li><strong>Role Aへ:</strong> 3Dマッピングの計算に必要な、カメラの実世界での設置位置（高さ、角度）、画角（FOV）、およびキャリブレーション行列のパラメータを要求します。</li>

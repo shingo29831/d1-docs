@@ -43,12 +43,13 @@
                 <div class="feature-desc">
                     <p><strong>目的:</strong> エッジから送信されるMQTTメッセージを永続化する。</p>
                     <ol>
-                        <li>IoT Coreのメッセージルーティングルールを作成し、特定トピックのデータをDynamoDBにINSERTするアクションを設定。</li>
+                        <li>IoT Coreのメッセージルーティングルールを作成し、特定トピックのデータをDynamoDBにINSERTするアクションを設定する。この際、必ず<strong>「DynamoDBv2アクション」</strong>を選択し、ペイロードがフラットな構造のまま保存されるようにする。</li>
                         <li>SQLステートメント内で、TTL（自動削除）用の属性として <code>expiration_time</code> を計算して付与する（例: <code>SELECT *, timestamp() / 1000 + 2592000 AS expiration_time FROM 'topic/#'</code> ※30日間保持の場合）。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
-                        プロビジョニングモード（1WCU固定）で運用するため、バーストトラフィック時に書き込みスロットリングが発生しデータが欠損するリスクがあります。必ずIoT Coreルールの「エラーアクション」として、<strong>CloudWatch Logsへエラー内容を出力する設定</strong>、または<strong>SQS（Dead Letter Queue）へメッセージを退避する設定</strong>を実装してください。これがないとデータ欠損時に原因追及が不可能になります。
+                        <strong>1. ペイロードのネスト問題:</strong> レガシーな「DynamoDBアクション」を使用すると、データが <code>payload</code> 属性内にネストされてしまいます。Lambdaを挟んで整形するとコストと障害点が増加するため、必ずJSONを直接マッピングできる「DynamoDBv2アクション」を使用してください。<br>
+                        <strong>2. データ欠損対策:</strong> プロビジョニングモード（1WCU固定）で運用するため、バーストトラフィック時に書き込みスロットリングが発生しデータが欠損するリスクがあります。必ずIoT Coreルールの「エラーアクション」として、<strong>CloudWatch Logsへエラー内容を出力する設定</strong>、または<strong>SQS（Dead Letter Queue）へメッセージを退避する設定</strong>を実装してください。
                     </p>
                 </div>
             </div>
@@ -176,6 +177,11 @@
 {
   "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307410000, "event_type": "complex_alert",
   "details": { "alert_type": "night_wandering", "trigger_device": "mt20_door_01", "lux": 5 }
+}
+// パターン4: 行動パターン解析結果
+{
+  "device_id": "system_logic_01", "room_id": "living_room", "timestamp": 1723307420000, "event_type": "risk_suggestion",
+  "details": { "risk_level": "high", "suggested_area": { "x": 100, "y": 200, "radius": 50 }, "reason": "unusual_access_time" }
 }</code></pre>
                     <ul style="margin-top: 10px;">
                         <li><strong>Role Aへ共有:</strong> AWS IoT Coreのエンドポイント、デバイス証明書。およびStep 6で検証済みの <strong>Webex Bot Access Token</strong> と <strong>Room ID</strong>。</li>
