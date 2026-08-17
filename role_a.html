@@ -130,7 +130,7 @@
                     <ol>
                         <li><code>boto3</code> を用いて、Role Bが構築したDynamoDBから過去の滞在座標と時間帯データを定期的に（例: 1日1回）取得する。</li>
                         <li><code>scikit-learn</code> の <code>IsolationForest</code> を用いてデータをクラスタリングし、異常スコアを算出する。</li>
-                        <li>算出されたリスクエリアの座標データをDynamoDBへ書き戻し（保存し）、Role Bの履歴取得API経由でRole Cのダッシュボードにサジェストする（WebSocketによるリアルタイム通知は不要）。</li>
+                        <li>算出されたリスクエリアの座標データを <code>boto3</code> を用いてDynamoDBへ直接書き込み（保存し）、Role Bの履歴取得API経由でRole Cのダッシュボードにサジェストする（WebSocketによるリアルタイム通知は不要）。</li>
                     </ol>
                     <p style="margin-top: 10px; padding: 10px; background: #fff3cd; border-left: 4px solid #ffc107; color: #856404;">
                         <strong>【重要】技術的課題と根本解決:</strong><br>
