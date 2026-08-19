@@ -188,17 +188,17 @@
             <div class="slide-header">各コンポーネントの役割</div>
             <div class="slide-content">
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; height: 100%; align-content: center; padding-bottom: 4rem;">
-                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #9c27b0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #9c27b0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
                         <h3 style="color: #9c27b0; margin-bottom: 1.5rem; font-size: 1.8rem;"><i class="fa-solid fa-brain"></i> AI骨格検知モジュール</h3>
-                        <p style="font-size: 1.4rem; color: var(--text-muted);">映像から人物のキーポイント（関節位置）のみを抽出。映像をそのまま送るのではなく、軽い「座標データ」に変換することで、通信帯域を節約しつつプライバシーを完全に保護。</p>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); flex-grow: 1;">映像から人物のキーポイント（関節位置）のみを抽出。<br>映像をそのまま送るのではなく、<br>軽い「座標データ」に変換することで、<br>通信帯域を節約しつつプライバシーを完全に保護。</p>
                     </div>
-                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #FF9900; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #FF9900; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
                         <h3 style="color: #FF9900; margin-bottom: 1.5rem; font-size: 1.8rem;"><i class="fa-brands fa-aws"></i> クラウド連携基盤</h3>
-                        <p style="font-size: 1.4rem; color: var(--text-muted);">AWS IoT Coreを採用し、AIが検知したデータをクライアントへ双方向・低遅延で配信。DynamoDBで履歴を安全に永続化。</p>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); flex-grow: 1;">AWS IoT Coreを採用し、<br>AIが検知したデータを<br>クライアントへ双方向・低遅延で配信。<br>DynamoDBで履歴を安全に永続化。</p>
                     </div>
-                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #ff4a4a; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #ff4a4a; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
                         <h3 style="color: #ff4a4a; margin-bottom: 1.5rem; font-size: 1.8rem;"><i class="fa-solid fa-cube"></i> 3Dダッシュボード</h3>
-                        <p style="font-size: 1.4rem; color: var(--text-muted);">ブラウザのみで動作する3D空間。間取り作成、家具や危険エリアの配置をGUIで直感的に行える。履歴データは3Dヒートマップとして可視化し、事故の未然防止に貢献。</p>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); flex-grow: 1;">ブラウザのみで動作する3D空間。<br>間取り作成、家具や危険エリアの配置を<br>GUIで直感的に行える。<br>履歴データは3Dヒートマップとして可視化。</p>
                     </div>
                 </div>
             </div>
@@ -214,17 +214,17 @@
                             <i class="fa-solid fa-desktop" style="font-size: 3.5rem; color: var(--accent-color);"></i>
                             <h3 style="color: var(--accent-color); font-size: 1.8rem;">クライアント (監視者)</h3>
                         </div>
-                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6;">WebGLをサポートするモダンブラウザ（Chrome, Edge, Safari等）。PC・スマートフォン両対応。専用アプリのインストールは一切不要。</p>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6; flex-grow: 1;">WebGLをサポートするモダンブラウザ<br>（Chrome, Edge, Safari等）。<br>PC・スマートフォン両対応。<br>専用アプリのインストールは一切不要。</p>
                     </div>
                     <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 8px solid #9c27b0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
                         <div style="display: flex; align-items: center; gap: 1.5rem;">
                             <i class="fa-brands fa-python" style="font-size: 3.5rem; color: #9c27b0;"></i>
                             <h3 style="color: #9c27b0; font-size: 1.8rem;">AI推論モジュール</h3>
                         </div>
-                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6;">
-                            <strong>環境:</strong> Python 3.x, OpenCV, Ultralytics (YOLOv8n-pose)<br>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6; flex-grow: 1;">
+                            <strong>環境:</strong> Python 3.x, OpenCV, Ultralytics<br>
                             <strong>インフラ:</strong> AWS EC2 (t2.small)<br>
-                            <span style="font-size: 1.2rem; display: inline-block; margin-top: 0.5rem;">※Meraki MVカメラ内蔵のエッジAIでは骨格解析がサポートされていないため、映像ストリームを取得しEC2上で推論を実行。最適化の余地を残しつつ、現在はt2.smallで稼働中。</span>
+                            <span style="font-size: 1.2rem; display: inline-block; margin-top: 0.5rem;">※Meraki MVカメラ内蔵のエッジAIでは<br>骨格解析がサポートされていないため、<br>映像ストリームを取得しEC2上で推論を実行。<br>現在はt2.smallで稼働中。</span>
                         </p>
                     </div>
                     <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 8px solid #FF9900; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
@@ -232,9 +232,9 @@
                             <i class="fa-brands fa-aws" style="font-size: 3.5rem; color: #FF9900;"></i>
                             <h3 style="color: #FF9900; font-size: 1.8rem;">クラウド連携基盤</h3>
                         </div>
-                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6;">
-                            <strong>AWSサービス:</strong> IoT Core, DynamoDB, API Gateway, Lambda, Cognito<br><br>
-                            サーバーレスアーキテクチャを採用し、待機コストを最小化。
+                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6; flex-grow: 1;">
+                            <strong>AWSサービス:</strong><br>IoT Core, DynamoDB, API Gateway, Cognito<br><br>
+                            サーバーレスアーキテクチャを採用し、<br>待機コストを最小化。
                         </p>
                     </div>
                 </div>
@@ -251,14 +251,14 @@
                             <i class="fa-solid fa-shield-halved" style="font-size: 3.5rem; color: var(--secondary-color);"></i>
                             <h3 style="color: var(--primary-color); font-size: 2rem;">圧倒的なプライバシー保護</h3>
                         </div>
-                        <p style="font-size: 1.5rem; color: var(--text-muted); line-height: 1.6;">介護施設や保育園、病院など、これまで「見られる側の心理的抵抗」によりカメラを置きたくても置けなかった場所への導入が可能になります。</p>
+                        <p style="font-size: 1.5rem; color: var(--text-muted); line-height: 1.6; flex-grow: 1;">介護施設や保育園、病院など、<br>これまで「見られる側の心理的抵抗」により<br>カメラを置きたくても置けなかった場所への<br>導入が可能になります。</p>
                     </div>
                     <div style="background: #f8f9fa; padding: 3rem; border-radius: 12px; border-top: 8px solid var(--meraki-color); box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
                         <div style="display: flex; align-items: center; gap: 1.5rem;">
                             <i class="fa-solid fa-earth-asia" style="font-size: 3.5rem; color: var(--meraki-color);"></i>
                             <h3 style="color: var(--primary-color); font-size: 2rem;">汎用性と水平展開</h3>
                         </div>
-                        <p style="font-size: 1.5rem; color: var(--text-muted); line-height: 1.6;">危険エリアの侵入検知や転倒検知の仕組みは、工場や建設現場での安全管理など、他業界へも容易に展開可能です。</p>
+                        <p style="font-size: 1.5rem; color: var(--text-muted); line-height: 1.6; flex-grow: 1;">危険エリアの侵入検知や転倒検知の仕組みは、<br>工場や建設現場での安全管理など、<br>他業界へも容易に展開可能であり、<br>幅広いビジネス価値を提供します。</p>
                     </div>
                 </div>
             </div>
