@@ -454,6 +454,20 @@ header p {
     line-height: 1.8;
 }
 
+.slide-content .mermaid-lazy {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.slide-content .mermaid-lazy svg {
+    width: 100%;
+    height: auto;
+    max-height: 100%;
+}
+
 .slide-controls {
     position: absolute;
     bottom: 2rem;
