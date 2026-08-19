@@ -190,7 +190,7 @@
                 <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; height: 100%; align-content: center; padding-bottom: 4rem;">
                     <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #9c27b0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
                         <h3 style="color: #9c27b0; margin-bottom: 1.5rem; font-size: 1.8rem;"><i class="fa-solid fa-brain"></i> AI骨格検知モジュール</h3>
-                        <p style="font-size: 1.4rem; color: var(--text-muted); flex-grow: 1;">映像から人物のキーポイント（関節位置）のみを抽出。<br>映像をそのまま送るのではなく、<br>軽い「座標データ」に変換することで、<br>通信帯域を節約しつつプライバシーを完全に保護。</p>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); flex-grow: 1;">映像から人物の関節位置のみを抽出。<br>映像をそのまま送るのではなく、<br>「座標データ」に変換することで、<br>プライバシーを完全に保護。</p>
                     </div>
                     <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #FF9900; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column;">
                         <h3 style="color: #FF9900; margin-bottom: 1.5rem; font-size: 1.8rem;"><i class="fa-brands fa-aws"></i> クラウド連携基盤</h3>
@@ -224,7 +224,6 @@
                         <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6; flex-grow: 1;">
                             <strong>環境:</strong> Python 3.x, OpenCV, Ultralytics<br>
                             <strong>インフラ:</strong> AWS EC2 (t2.small)<br>
-                            <span style="font-size: 1.2rem; display: inline-block; margin-top: 0.5rem;">※Meraki MVカメラ内蔵のエッジAIでは<br>骨格解析がサポートされていないため、<br>映像ストリームを取得しEC2上で推論を実行。<br>現在はt2.smallで稼働中。</span>
                         </p>
                     </div>
                     <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 8px solid #FF9900; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
