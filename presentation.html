@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プレゼンテーション - 子供見守りシステム</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background: #1a222c;
+        }
+        .slide-counter {
+            position: absolute;
+            bottom: 2rem;
+            right: 3rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="slide-overlay" style="display: flex;">
+        <div class="slide-container">
+            <!-- スライド番号のみ残し、ボタンは削除 -->
+            <div id="slide-counter" class="slide-counter">1 / 9</div>
+
+        <!-- Slide 1: タイトル -->
+        <div class="slide active">
+            <div class="slide-header">コンセプト・概要</div>
+            <div class="slide-content" style="display: flex; flex-direction: column; justify-content: center; height: 100%; padding-bottom: 4rem;">
+                <h2 style="font-size: 3.5rem; margin-bottom: 3rem; color: var(--primary-color); line-height: 1.3;">AI骨格検知 × 3Dデジタルツインによる<br>プライバシーに配慮した次世代リアルタイム見守りシステム</h2>
+                <div style="padding: 2rem; background: #e0f7fa; border-left: 8px solid #00bceb; border-radius: 8px; font-size: 1.8rem; line-height: 1.6;">
+                    <div style="margin-bottom: 1rem;"><strong><i class="fa-solid fa-trophy" style="color: #FF9900;"></i> Cisco d1グランプリ 該当テーマ:</strong><br>「少子高齢化・労働力不足」「安全・安心な社会の実現」</div>
+                    <div><strong><i class="fa-solid fa-network-wired" style="color: var(--meraki-color);"></i> 活用シスコ製品:</strong><br>Cisco Meraki (MVカメラ / MTセンサー), Cisco Webex</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 2: 開発背景 -->
+        <div class="slide">
+            <div class="slide-header">開発背景</div>
+            <div class="slide-content" style="display: flex; flex-direction: column; justify-content: center; height: 100%; padding-bottom: 5rem;">
+                <div style="background: #f8f9fa; padding: 4rem; border-radius: 16px; border-left: 8px solid var(--meraki-color); box-shadow: 0 8px 25px rgba(0,0,0,0.05);">
+                    <div style="display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem;">
+                        <i class="fa-solid fa-comments" style="font-size: 4.5rem; color: var(--meraki-color);"></i>
+                        <h3 style="font-size: 2.5rem; color: var(--primary-color);">Cisco社員の皆様からのリアルな声</h3>
+                    </div>
+                    <p style="font-size: 1.8rem; color: var(--text-main); line-height: 1.8;">
+                        Cisco d1グランプリの中間イベントにて、複数のCisco社員の方々から<br>
+                        <strong style="color: var(--accent-color);">「リモートワーク中など、自宅での子供の見守りが本当に大変」</strong><br>
+                        という切実な悩みを伺いました。<br><br>
+                        このリアルな課題をテクノロジーで解決したいという思いが、<br>
+                        本システム開発の大きな原動力となっています。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: 課題 -->
+        <div class="slide">
+            <div class="slide-header">解決する課題</div>
+            <div class="slide-content" style="display: flex; flex-direction: column; justify-content: center; height: 100%; padding-bottom: 5rem;">
+                <ul style="list-style: none; gap: 3rem; display: flex; flex-direction: column;">
+                    <li style="display: flex; align-items: flex-start; gap: 2rem;">
+                        <i class="fa-solid fa-eye-slash" style="font-size: 4rem; color: var(--accent-color); width: 80px; text-align: center;"></i>
+                        <div>
+                            <h3 style="font-size: 2.2rem; margin-bottom: 1rem; color: var(--primary-color);">見られる側の心理的抵抗（プライバシー問題）</h3>
+                            <p style="font-size: 1.6rem; color: var(--text-muted);">従来のカメラ映像監視では、常に監視されているというストレスを与えてしまう。</p>
+                        </div>
+                    </li>
+                    <li style="display: flex; align-items: flex-start; gap: 2rem;">
+                        <i class="fa-solid fa-user-nurse" style="font-size: 4rem; color: var(--accent-color); width: 80px; text-align: center;"></i>
+                        <div>
+                            <h3 style="font-size: 2.2rem; margin-bottom: 1rem; color: var(--primary-color);">監視者の心理的・肉体的負担</h3>
+                            <p style="font-size: 1.6rem; color: var(--text-muted);">複数のモニターを常時目視し続ける必要があり、見落としのリスクも高い。</p>
+                        </div>
+                    </li>
+                    <li style="display: flex; align-items: flex-start; gap: 2rem;">
+                        <i class="fa-solid fa-video-slash" style="font-size: 4rem; color: var(--accent-color); width: 80px; text-align: center;"></i>
+                        <div>
+                            <h3 style="font-size: 2.2rem; margin-bottom: 1rem; color: var(--primary-color);">2D映像特有の死角や距離感の把握の難しさ</h3>
+                            <p style="font-size: 1.6rem; color: var(--text-muted);">平面の映像だけでは、対象者が危険なエリアにどれだけ接近しているか正確に把握しづらい。</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Slide 4: ソリューション -->
+        <div class="slide">
+            <div class="slide-header">ソリューション</div>
+            <div class="slide-content" style="display: flex; flex-direction: column; justify-content: center; height: 100%; padding-bottom: 5rem;">
+                <div style="background: #f8f9fa; padding: 3rem; border-radius: 16px; border-top: 8px solid var(--secondary-color); box-shadow: 0 8px 25px rgba(0,0,0,0.05);">
+                    <ul style="list-style: none; gap: 2.5rem; display: flex; flex-direction: column;">
+                        <li style="display: flex; align-items: center; gap: 2rem;">
+                            <i class="fa-solid fa-person-walking" style="font-size: 3.5rem; color: var(--secondary-color); width: 60px; text-align: center;"></i>
+                            <p style="font-size: 1.8rem; color: var(--text-main);">カメラ映像をAI（YOLOv8）でリアルタイムに<strong>「骨格データ（座標）」</strong>へと変換。</p>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 2rem;">
+                            <i class="fa-solid fa-cubes" style="font-size: 3.5rem; color: var(--secondary-color); width: 60px; text-align: center;"></i>
+                            <p style="font-size: 1.8rem; color: var(--text-main);">抽出した座標データを、ブラウザ上の<strong>「3D空間（デジタルツイン）」</strong>にマッピング。</p>
+                        </li>
+                        <li style="display: flex; align-items: center; gap: 2rem;">
+                            <i class="fa-solid fa-shield-check" style="font-size: 3.5rem; color: var(--secondary-color); width: 60px; text-align: center;"></i>
+                            <p style="font-size: 1.8rem; color: var(--text-main)"><span style="color: var(--accent-color); font-weight: bold; font-size: 2rem;">映像そのものは一切表示しない</span>ためプライバシーが守られ、AIが危険（転倒や危険エリア侵入）を自動検知して通知する。</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 5: 構成図 -->
+        <div class="slide">
+            <div class="slide-header">システム構成図</div>
+            <div class="slide-content" style="display: flex; align-items: center; justify-content: center; height: 100%; padding-bottom: 3rem;">
+                <div class="mermaid-lazy" id="slide-mermaid">
+                    %%{init: {'theme': 'default', 'themeVariables': { 'fontSize': '18px'}}}%%
+                    graph LR
+                        subgraph Camera_Sensors ["現場 (Camera & Sensors)"]
+                            C["<img src='images/meraki-mv.png' width='60' /><br>Cisco Meraki カメラ<br>(映像)"]
+                            S["<img src='images/meraki-mt10.png' width='60' /><br>Meraki センサー<br>(データ取得)"]
+                        end
+                        
+                        subgraph AI_Module ["AI推論モジュール"]
+                            EC2["<img src='images/aws-ec2.png' width='60' /><br>YOLOv8n-Pose (Python)<br>骨格座標抽出・危険判定<br>※映像データはここで破棄"]
+                        end
+
+                        subgraph Cloud ["Cloud (AWS)"]
+                            IoT["<img src='images/aws-iot.png' width='60' /><br>IoT Core (MQTT)<br>超低遅延メッセージング"]
+                            DB[("<img src='images/aws-dynamodb.png' width='60' /><br>DynamoDB<br>履歴保存")]
+                        end
+                        
+                        subgraph Client ["Client (Web & Webex)"]
+                            UI["<img src='images/react-three.png' width='60' /><br>React + Three.js<br>3D描画"]
+                            Webex["<img src='images/webex.png' width='60' /><br>Cisco Webex<br>アラート通知"]
+                        end
+
+                        C -- "映像ストリーム" --> EC2
+                        S -- "センサーデータ" --> IoT
+                        
+                        EC2 -- "推論結果 (JSON)" --> IoT
+                        EC2 -- "アラート通知" --> Webex
+                        IoT -- "履歴保存" --> DB
+                        
+                        DB -- "履歴取得" --> UI
+                        IoT -. "MQTT over WebSocket" .-> UI
+                        
+                        classDef meraki fill:#74b82d,stroke:#fff,stroke-width:2px,color:#fff;
+                        classDef aws fill:#FF9900,stroke:#fff,stroke-width:2px,color:#232F3E;
+                        classDef ui fill:#ff4a4a,stroke:#fff,stroke-width:2px,color:#fff;
+                        classDef cisco fill:#00bceb,stroke:#fff,stroke-width:2px,color:#fff;
+                        classDef ai fill:#9c27b0,stroke:#fff,stroke-width:2px,color:#fff;
+                        
+                        class C,S meraki;
+                        class IoT,DB aws;
+                        class UI ui;
+                        class Webex cisco;
+                        class EC2 ai;
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 6: 画面イメージ -->
+        <div class="slide">
+            <div class="slide-header">システム画面イメージ（3Dダッシュボード）</div>
+            <div class="slide-content" style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; padding-bottom: 3rem;">
+                <div style="width: 85%; aspect-ratio: 16/9; background: #e9ecef; border: 4px dashed #adb5bd; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted);">
+                    <i class="fa-solid fa-image" style="font-size: 5rem; margin-bottom: 1.5rem; color: #adb5bd;"></i>
+                    <p style="font-size: 1.8rem; font-weight: bold; margin-bottom: 0.5rem;">ここにシステム画面の画像を貼り付けます</p>
+                    <p style="font-size: 1.4rem; margin-bottom: 1rem;">推奨サイズ: 横 1200px × 縦 675px (比率 16:9)</p>
+                    <p style="font-size: 1.1rem; background: #fff; padding: 0.5rem 1rem; border-radius: 4px; border: 1px solid #dee2e6;">
+                        <code>&lt;img src="画像のパス" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" /&gt;</code> に置き換えてください
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 7: 役割 -->
+        <div class="slide">
+            <div class="slide-header">各コンポーネントの役割</div>
+            <div class="slide-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; height: 100%; align-content: center; padding-bottom: 4rem;">
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #9c27b0; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <h3 style="color: #9c27b0; margin-bottom: 1.5rem; font-size: 1.8rem;"><i class="fa-solid fa-brain"></i> AI骨格検知モジュール</h3>
+                        <p style="font-size: 1.4rem; color: var(--text-muted);">映像から人物のキーポイント（関節位置）のみを抽出。映像をそのまま送るのではなく、軽い「座標データ」に変換することで、通信帯域を節約しつつプライバシーを完全に保護。</p>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #FF9900; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <h3 style="color: #FF9900; margin-bottom: 1.5rem; font-size: 1.8rem;"><i class="fa-brands fa-aws"></i> クラウド連携基盤</h3>
+                        <p style="font-size: 1.4rem; color: var(--text-muted);">AWS IoT Coreを採用し、AIが検知したデータをクライアントへ双方向・低遅延で配信。DynamoDBで履歴を安全に永続化。</p>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 6px solid #ff4a4a; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
+                        <h3 style="color: #ff4a4a; margin-bottom: 1.5rem; font-size: 1.8rem;"><i class="fa-solid fa-cube"></i> 3Dダッシュボード</h3>
+                        <p style="font-size: 1.4rem; color: var(--text-muted);">ブラウザのみで動作する3D空間。間取り作成、家具や危険エリアの配置をGUIで直感的に行える。履歴データは3Dヒートマップとして可視化し、事故の未然防止に貢献。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 8: 実行要件 -->
+        <div class="slide">
+            <div class="slide-header">実行要件</div>
+            <div class="slide-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem; height: 100%; align-content: center; padding-bottom: 4rem;">
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 8px solid var(--accent-color); box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <i class="fa-solid fa-desktop" style="font-size: 3.5rem; color: var(--accent-color);"></i>
+                            <h3 style="color: var(--accent-color); font-size: 1.8rem;">クライアント (監視者)</h3>
+                        </div>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6;">WebGLをサポートするモダンブラウザ（Chrome, Edge, Safari等）。PC・スマートフォン両対応。専用アプリのインストールは一切不要。</p>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 8px solid #9c27b0; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <i class="fa-brands fa-python" style="font-size: 3.5rem; color: #9c27b0;"></i>
+                            <h3 style="color: #9c27b0; font-size: 1.8rem;">AI推論モジュール</h3>
+                        </div>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6;">
+                            <strong>環境:</strong> Python 3.x, OpenCV, Ultralytics (YOLOv8n-pose)<br>
+                            <strong>インフラ:</strong> AWS EC2 (t2.small)<br>
+                            <span style="font-size: 1.2rem; display: inline-block; margin-top: 0.5rem;">※Meraki MVカメラ内蔵のエッジAIでは骨格解析がサポートされていないため、映像ストリームを取得しEC2上で推論を実行。最適化の余地を残しつつ、現在はt2.smallで稼働中。</span>
+                        </p>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 2.5rem; border-radius: 12px; border-top: 8px solid #FF9900; box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <i class="fa-brands fa-aws" style="font-size: 3.5rem; color: #FF9900;"></i>
+                            <h3 style="color: #FF9900; font-size: 1.8rem;">クラウド連携基盤</h3>
+                        </div>
+                        <p style="font-size: 1.4rem; color: var(--text-muted); line-height: 1.6;">
+                            <strong>AWSサービス:</strong> IoT Core, DynamoDB, API Gateway, Lambda, Cognito<br><br>
+                            サーバーレスアーキテクチャを採用し、待機コストを最小化。
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 9: 展望 -->
+        <div class="slide">
+            <div class="slide-header">ビジネス価値と展望</div>
+            <div class="slide-content">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; height: 100%; align-content: center; padding-bottom: 4rem;">
+                    <div style="background: #f8f9fa; padding: 3rem; border-radius: 12px; border-top: 8px solid var(--secondary-color); box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <i class="fa-solid fa-shield-halved" style="font-size: 3.5rem; color: var(--secondary-color);"></i>
+                            <h3 style="color: var(--primary-color); font-size: 2rem;">圧倒的なプライバシー保護</h3>
+                        </div>
+                        <p style="font-size: 1.5rem; color: var(--text-muted); line-height: 1.6;">介護施設や保育園、病院など、これまで「見られる側の心理的抵抗」によりカメラを置きたくても置けなかった場所への導入が可能になります。</p>
+                    </div>
+                    <div style="background: #f8f9fa; padding: 3rem; border-radius: 12px; border-top: 8px solid var(--meraki-color); box-shadow: 0 4px 15px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 1.5rem;">
+                            <i class="fa-solid fa-earth-asia" style="font-size: 3.5rem; color: var(--meraki-color);"></i>
+                            <h3 style="color: var(--primary-color); font-size: 2rem;">汎用性と水平展開</h3>
+                        </div>
+                        <p style="font-size: 1.5rem; color: var(--text-muted); line-height: 1.6;">危険エリアの侵入検知や転倒検知の仕組みは、工場や建設現場での安全管理など、他業界へも容易に展開可能です。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        // Mermaid図解の初期化
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            securityLevel: 'loose'
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const slides = document.querySelectorAll('.slide');
+            const slideCounter = document.getElementById('slide-counter');
+            let currentSlide = 0;
+            let isSlideMermaidRendered = false;
+
+            // 自動フルスクリーン化の試行（ブラウザの制約でブロックされる場合があります）
+            const tryFullscreen = () => {
+                if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log("自動フルスクリーン化はユーザーアクションが必要なため保留されました。キー操作時に実行されます。");
+                    });
+                }
+            };
+            
+            // 少し遅延させてからフルスクリーンを試行
+            setTimeout(tryFullscreen, 100);
+
+            function updateSlides() {
+                slides.forEach((slide, index) => {
+                    slide.classList.toggle('active', index === currentSlide);
+                });
+                slideCounter.textContent = `${currentSlide + 1} / ${slides.length}`;
+                
+                // スライド5（インデックス4）が表示されたらMermaidを描画
+                if (currentSlide === 4 && !isSlideMermaidRendered) {
+                    setTimeout(async () => {
+                        const lazyNode = document.getElementById('slide-mermaid');
+                        if (lazyNode) {
+                            try {
+                                await mermaid.run({ nodes: [lazyNode] });
+                                isSlideMermaidRendered = true;
+                            } catch (err) {
+                                console.error('Mermaid rendering failed:', err);
+                            }
+                        }
+                    }, 100);
+                }
+            }
+
+            // キーボード操作のみでスライドを移動
+            document.addEventListener('keydown', (e) => {
+                // 最初のキー操作時にフルスクリーン化を試行（自動化がブロックされていた場合のフォールバック）
+                tryFullscreen();
+
+                if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') {
+                    if (currentSlide < slides.length - 1) {
+                        currentSlide++;
+                        updateSlides();
+                    }
+                } else if (e.key === 'ArrowLeft') {
+                    if (currentSlide > 0) {
+                        currentSlide--;
+                        updateSlides();
+                    }
+                } else if (e.key === 'Escape') {
+                    closeOrBack();
+                }
+            });
+
+            function closeOrBack() {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen().catch(() => {});
+                }
+                // 新しいタブで開かれている場合は閉じる、そうでない場合は元のページへ遷移
+                if (window.opener) {
+                    window.close();
+                } else {
+                    window.location.href = 'index.html';
+                }
+            }
+
+            // 初期表示
+            updateSlides();
+        });
+    </script>
+</body>
+</html>

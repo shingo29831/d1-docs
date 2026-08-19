@@ -452,6 +452,9 @@ header p {
     flex-grow: 1;
     font-size: 1.5rem;
     line-height: 1.8;
+    /* 単語の途中での不自然な改行を防ぎ、文節で折り返す */
+    word-break: keep-all;
+    overflow-wrap: break-word;
 }
 
 .slide-content .mermaid-lazy {
