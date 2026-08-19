@@ -318,3 +318,185 @@ header p {
 .btn-primary i {
     margin-right: 0.5rem;
 }
+
+/* プレゼン用全画面オーバーレイ */
+.presentation-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #f4f7f6;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.presentation-container {
+    width: 100%;
+    max-width: 1920px;
+    aspect-ratio: 16 / 9;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 3rem;
+    border: 4px solid var(--primary-color);
+    cursor: pointer; /* クリックで閉じられることを示唆 */
+}
+
+.presentation-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.presentation-header h2 {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: 0.5rem;
+}
+
+.presentation-header p {
+    font-size: 1.2rem;
+    color: var(--text-muted);
+    font-weight: bold;
+}
+
+.presentation-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.presentation-content .mermaid,
+.presentation-content .mermaid-lazy {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.presentation-content .mermaid svg,
+.presentation-content .mermaid-lazy svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* プレゼン用スライドオーバーレイ */
+.slide-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #1a222c;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+.slide-container {
+    width: 100%;
+    max-width: 1920px;
+    aspect-ratio: 16 / 9;
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.slide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 4rem;
+    display: none;
+    flex-direction: column;
+    background-image: radial-gradient(circle at top right, #f8f9fa 0%, #ffffff 100%);
+}
+
+.slide.active {
+    display: flex;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-header {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    border-bottom: 4px solid var(--secondary-color);
+    padding-bottom: 1rem;
+    margin-bottom: 2rem;
+    font-weight: bold;
+}
+
+.slide-content {
+    flex-grow: 1;
+    font-size: 1.5rem;
+    line-height: 1.8;
+}
+
+.slide-controls {
+    position: absolute;
+    bottom: 2rem;
+    right: 3rem;
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+    z-index: 10;
+}
+
+.slide-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    font-size: 1.2rem;
+    cursor: pointer;
+    border-radius: 30px;
+    transition: background 0.2s;
+    font-weight: bold;
+}
+
+.slide-btn:hover {
+    background: var(--secondary-color);
+}
+
+.slide-close {
+    position: absolute;
+    top: 2rem;
+    right: 2rem;
+    background: rgba(0,0,0,0.05);
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    font-size: 1.5rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.2s;
+}
+
+.slide-close:hover {
+    background: rgba(0,0,0,0.1);
+    color: var(--accent-color);
+}
